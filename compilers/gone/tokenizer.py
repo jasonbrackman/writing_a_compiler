@@ -96,7 +96,7 @@ Bonus: How would you go about turning these tests into proper unit tests?
 # used to report all error messages issued by your lexer.  Unit tests and
 # other features of the compiler will rely on this function.  See the
 # file errors.py for more documentation about the error handling mechanism.
-from .errors import error
+from gone.errors import error
 
 # -----------------------------------------------------------------------
 # The SLY package. https://github.com/dabeaz/sly
@@ -131,6 +131,7 @@ class GoneLexer(Lexer):
         # Delimiters and other symbols
         'ASSIGN', 'LPAREN', 'RPAREN', 'SEMI', 'COMMA', 
         'LBRACE', 'RBRACE', 'LBRACKET', 'RBRACKET',
+
     }
 
     # ----------------------------------------------------------------------
@@ -145,17 +146,17 @@ class GoneLexer(Lexer):
     #
 
     # C-style comment (/* ... */)
-    @_(r'regex for a C-style comment')
+    @_(r'/\*(.|\n)*?\*/')
     def COMMENT(self, t):
         self.lineno += t.value.count('\n')
 
     # C++-style comment (//...)
-    @_(r'regex for a C plusplus style comment')
+    @_(r'//.*\n')
     def CPPCOMMENT(self, t):
         self.lineno += 1
 
     # Unterminated C-style comment. This is an error you should report
-    @_(r'regex for an unterminated comment')
+    @_(r'/\*(.|\n)*$')
     def COMMENT_UNTERM(self, t):
         error(self.lineno, "Unterminated comment")
 
@@ -168,16 +169,23 @@ class GoneLexer(Lexer):
     # before shorter symbols that are a substring (for example, the
     # pattern for <= should go before <).
 
-    PLUS      = r'regex for a single plus sign'
-    MINUS     = r'regex for a single minus sign'
-    TIMES     = r'regex for a single star'
-    DIVIDE    = r'regex for a single forward slash'
-    SEMI      = r'regex for a semicolon'
-    LPAREN    = r'regex for a left paren ('
-    RPAREN    = r'regex for a right paren )'
-    COMMA     = r'regex for a comma'
-    LBRACKET  = r'regex for a left bracket ['
-    RBRACKET  = r'regex for a right bracket ]'
+    PLUS      = r'\+'
+    MINUS     = r'-'
+    TIMES     = r'\*'
+    DIVIDE    = r'/'
+    SEMI      = r';'
+    LPAREN    = r'\('
+    RPAREN    = r'\)'
+    COMMA     = r','
+    LBRACKET  = r'\['
+    RBRACKET  = r'\]'
+    ASSIGN = r'='
+    #LE = r'<='
+    #LT = r'<'
+    #GE = r'>='
+    #GT = r'[>]'
+    #NE = r'!='
+    #EQ = r'=='
 
     # ----------------------------------------------------------------------
     # *** YOU MUST COMPLETE : write the regexs and additional code below ***
@@ -200,7 +208,7 @@ class GoneLexer(Lexer):
     #
     # The value should be converted to a Python float when lexed
 
-    @_(r'regex for a floating point number')
+    @_(r'(\d+\.\d+)|(\.\d+)')
     def FLOAT(self, t):
         t.value = float(t.value)
         return t
@@ -212,7 +220,7 @@ class GoneLexer(Lexer):
     # The value should be converted to a Python int when lexed.
     #
     # Bonus: Recognize integers in different bases such as 0x1a, 0o13 or 0b111011.
-    @_(r'regex for an integer')
+    @_(r'\d+')
     def INTEGER(self, t):
         # Conversion to a Python int
         t.value = int(t.value)
@@ -226,13 +234,13 @@ class GoneLexer(Lexer):
     # The quotes are not included as part of the value.
     #
     # Bonus:   How would you recognize string escape codes like \" or \n?
-    @_(r'regex for a quoted string')
+    @_(r'\".*?\"')
     def STRING(self, t):
         t.value = t.value[1:-1]
         return t
 
     # Unterminated string literal (an error)
-    @_(r'regex for an unterminated quoted string')
+    @_(r'\"(\.|.)*?\n')
     def STRING_UNTERM(self, t):
         error(self.lineno, "Unterminated string literal")
         self.lineno += 1
@@ -249,7 +257,7 @@ class GoneLexer(Lexer):
     # identifiers. You need to catch these and change their token type
     # to match the appropriate keyword.
 
-    @_(r'regex for an identifier')
+    @_(r'[a-zA-Z_][a-zA-Z0-9_]*')
     def ID(self, t):
         # *** YOU IMPLEMENT ***
         # Add code to look for keywords such as 'var', 'const', 'print', etc.
@@ -258,11 +266,14 @@ class GoneLexer(Lexer):
         # if t.value == 'var':
         #     t.type = 'VAR"
 
+        if t.value == 'print':
+            t.type = t.value.upper()
+
         return t
 
     # ----------------------------------------------------------------------
     # Method that ignores one or more newlines and increments the line number
-    @_(r'regex for one or more newlines')
+    @_(r'\n+')
     def ignore_newline(self, t):
         self.lineno += len(t.value)
 
@@ -285,7 +296,6 @@ def main():
     Main program. For debugging purposes.
     '''
     import sys
-    
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.tokenizer filename\n")
         raise SystemExit(1)
@@ -296,5 +306,6 @@ def main():
         print(tok)
 
 if __name__ == '__main__':
+    # From Terminal: python3 -m gone.tokenizer Tests/test_comment.g
     main()
 

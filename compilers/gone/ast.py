@@ -19,6 +19,7 @@ class AST(object):
     additional arguments specified as keywords are also assigned. 
     '''
     _fields = []
+
     def __init__(self, *args, **kwargs):
         assert len(args) == len(self._fields)
         for name, value in zip(self._fields, args):
@@ -26,6 +27,13 @@ class AST(object):
         # Assign additional keyword arguments if supplied
         for name, value in kwargs.items():
             setattr(self, name, value)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%s' % (f, getattr(self, f)) for f in self._fields]))
+
+    def dump(self):
+        for depth, node in flatten(self):
+            print('%s%s' % (' ' * (4 * depth), node))
 
 # ----------------------------------------------------------------------
 # Specific AST nodes.
@@ -48,6 +56,25 @@ class AST(object):
 #            return BinOp(p[1], p.expr0, p.expr1)
 #
 # ----------------------------------------------------------------------
+
+
+class Program(AST):
+    """
+    program expression
+    """
+    _fields = ['statements']
+
+
+class Statements(AST):
+    "statements can be more than one."
+    _fields = ['statements']
+
+    def append(self, stmt):
+        self.statements.append(stmt)
+
+    def __len__(self):
+        return len(self.statements)
+
 
 class PrintStatement(AST):
     '''

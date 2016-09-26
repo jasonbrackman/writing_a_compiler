@@ -85,17 +85,18 @@ from sly import Parser
 # used to report all error messages issued by your parser.  Unit tests and
 # other features of the compiler will rely on this function.  See the
 # file errors.py for more documentation about the error handling mechanism.
-from .errors import error
+from gone.errors import error
 
 # ----------------------------------------------------------------------
 # Import the lexer class.  It's token list is needed to validate and
 # build the parser object.
-from .tokenizer import GoneLexer
+from gone.tokenizer import GoneLexer
 
 # ----------------------------------------------------------------------
 # Get the AST nodes.  
 # Read instructions in ast.py
-from .ast import *
+from gone.ast import *
+
 
 class GoneParser(Parser):
     # Same token set as defined in the lexer
@@ -141,10 +142,30 @@ class GoneParser(Parser):
     #
     # Afterwards, add features by looking at the code in Tests/parsetest1-7.g
 
+    @_('statements')
+    def program(self, p):
+        return Program(p.statements)
+
+    @_('')
+    def program(self, p):
+        return Program([])
+
+    @_('statement')
+    def statements(self, p):
+        return Statements([p.statement])
+
+    @_('statements statement')
+    def statements(self, p):
+        p.statements.append(p.statement)
+        return p.statements
+
+    @_('print_statement')
+    def statement(self, p):
+        return p[0]
 
     @_('PRINT expression SEMI')
     def print_statement(self, p):
-        return PrintStatement(p.expression)
+        return PrintStatement(p.expression, lineno=p.lineno)
 
     @_('literal')
     def expression(self, p):
@@ -161,6 +182,14 @@ class GoneParser(Parser):
     @_('STRING')
     def literal(self, p):
         return Literal(p.STRING, 'string')
+
+    @_('expression PLUS expression',
+       'expression MINUS expression',
+       'expression DIVIDE expression',
+       'expression TIMES expression')
+    def expression(self, p):
+        return BinOp(p[1], p[0], p[2])
+
 
     # ----------------------------------------------------------------------
     # DO NOT MODIFY
@@ -190,8 +219,13 @@ def main():
     '''
     Main program. Used for testing.
     '''
+    #import os
     import sys
 
+    #script = r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Test/parsetest1.g'
+
+    #sys.argv = [os.path.realpath(__file__), script]
+    #print(sys.argv[1])
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')
         raise SystemExit(1)
@@ -204,4 +238,6 @@ def main():
         print('%s%s' % (' '*(4*depth), node))
 
 if __name__ == '__main__':
+    """python3 -m gone.parser Tests/parsetest1.g"""
+
     main()
