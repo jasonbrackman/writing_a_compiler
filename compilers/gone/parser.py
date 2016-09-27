@@ -99,6 +99,7 @@ from gone.ast import *
 
 
 class GoneParser(Parser):
+    debugfile = "show_me_what_is_going_on.out"
     # Same token set as defined in the lexer
     tokens = GoneLexer.tokens
 
@@ -106,8 +107,9 @@ class GoneParser(Parser):
     # Operator precedence table.   Operators must follow the same 
     # precedence rules as in Python.  Instructions to be given in the project.
 
-    precedence = (
-    )
+    # higher the index the higher the priority
+    precedence = (('left', 'PLUS', 'MINUS'),
+                  ('left', 'TIMES', 'DIVIDE'))
 
     # ----------------------------------------------------------------------
     # YOUR TASK.   Translate the BNF in the string below into a collection
@@ -160,9 +162,32 @@ class GoneParser(Parser):
         return p.statements
 
     @_('print_statement',
-       'const_declaration')
+       'const_declaration',
+       'var_declaration',
+       'func_declaration')
     def statement(self, p):
         return p[0]
+
+    @_('FUNC LPAREN expression RPAREN VAR')
+    def func_declaration(self,p):
+        """
+        Python uses:
+        "Module(
+            body=[Expr(
+                        value=Call(
+                                    func=Name(
+                                                id='min', ctx=Load()
+                                             ),
+                                    args=[List(elts=[Num(n=0), Num(n=1)], ctx=Load())], keywords=[]))])"
+        :param p:
+        :return:
+        """
+        return FuncDeclaration(p.ID, p.args)
+
+    @_('args')
+    def expression(self,p):
+        return [p.expression]
+
 
     @_('PRINT expression SEMI')
     def print_statement(self, p):
@@ -171,6 +196,37 @@ class GoneParser(Parser):
     @_('CONST ID ASSIGN expression SEMI')
     def const_declaration(self, p):
         return ConstDeclaration(p.ID, p.expression, lineno=p.lineno)
+
+    @_('location')
+    def expression(self, p):
+        return ReadLocation(p.location)
+
+    @_('VAR ID datatype SEMI')
+    def var_declaration(self, p):
+        """
+        var x int;
+        """
+        return VarDeclaration(p.ID, p.datatype, None)
+
+    @_('VAR ID datatype ASSIGN expression SEMI')
+    def var_declaration(self, p):
+        """ float x = 2;"""
+        return VarDeclaration(p.ID, p.datatype, p.expression, lineno=p.lineno)
+
+    @_('ID ASSIGN expression SEMI')
+    def var_declaration(self, p):
+        """
+        x = 1 + 2 * 3;
+        """
+        return VarDeclaration(p.ID, None, p.expression, lineno=p.lineno)
+
+    @_('ID')
+    def datatype(self, p):
+        return p.ID
+
+    @_('ID')
+    def location(self, p):
+        return VarLocation(p.ID)
 
     @_('literal')
     def expression(self, p):
@@ -193,17 +249,19 @@ class GoneParser(Parser):
        'expression DIVIDE expression',
        'expression TIMES expression')
     def expression(self, p):
-        return BinOp(p[1], p[0], p[2], lineno=p.lineno)
+        return BinOp(p[1], p.expression0, p.expression1, lineno=p.lineno)
 
     @_('MINUS expression',
        'PLUS expression')
     def expression(self, p):
         return UnaryOp(p[0], p.expression, lineno=p.lineno)
 
-    @_('LPAREN expression RPAREN')
+
+    @_('LPAREN expression RPAREN',
+       'LBRACKET expression RBRACKET',
+       'LBRACE expression RBRACE')
     def expression(self, p):
         return p.expression
-
 
     # ----------------------------------------------------------------------
     # DO NOT MODIFY
@@ -215,6 +273,7 @@ class GoneParser(Parser):
             error(p.lineno, "Syntax error in input at token '%s'" % p.value)
         else:
             error('EOF', 'Syntax error. No more input.')
+
 
 # ----------------------------------------------------------------------
 #                     DO NOT MODIFY ANYTHING BELOW HERE
@@ -238,7 +297,7 @@ def main():
 
     import sys
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest5.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')
@@ -247,6 +306,7 @@ def main():
     # Parse and create the AST
     ast = parse(open(sys.argv[1]).read())
     ast.dump()
+
 
 if __name__ == '__main__':
     """python3 -m gone.parser Tests/parsetest1.g"""

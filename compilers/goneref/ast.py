@@ -19,7 +19,6 @@ class AST(object):
     additional arguments specified as keywords are also assigned. 
     '''
     _fields = []
-
     def __init__(self, *args, **kwargs):
         assert len(args) == len(self._fields)
         for name, value in zip(self._fields, args):
@@ -27,13 +26,6 @@ class AST(object):
         # Assign additional keyword arguments if supplied
         for name, value in kwargs.items():
             setattr(self, name, value)
-
-    def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%s' % (f, getattr(self, f)) for f in self._fields]))
-
-    def dump(self):
-        for depth, node in flatten(self):
-            print('%s%s' % (' ' * (4 * depth), node))
 
 # ----------------------------------------------------------------------
 # Specific AST nodes.
@@ -43,101 +35,162 @@ class AST(object):
 # an example, for a binary operator, you might store the operator, the
 # left expression, and the right expression like this:
 #
-#    class BinOp(AST):
-#        _fields = ['op', 'left', 'right']
+#    class Binop(AST):
+#        _fields = ['op','left','right']
 #
-# In the parser.py file, you're going to create nodes using code
-# similar to this:
-#
-#    class GoneParser(Parser):
-#        ...
-#        @_('expr PLUS expr')
-#        def expr(self, p):
-#            return BinOp(p[1], p.expr0, p.expr1)
-#
+# Suggestion:  The nodes are listed here in a suggested order of work
+# on your parse.  You should start simple and incrementally work your
+# way up to building the complete grammar
 # ----------------------------------------------------------------------
 
+class Literal(AST):
+    '''
+    A literal value such as an integer, float, or string constant.
+    '''
+    _fields = ['value', 'typename']        
 
-class Program(AST):
-    """
-    program expression
-    """
-    _fields = ['statements']
+
+class Typename(AST):
+    '''
+    The name of a datatype such as 'int', 'float', or 'string'
+    '''
+    _fields = ['name']         
+
+class ArrayType(AST):
+    '''
+    An array datatype.  For example 'int [50]'
+    '''
+    _fields = ['typename', 'size']
+
+class LoadVariable(AST):
+    '''
+    A variable name loaded inside of an expression.  For example, 
+    in an expression "2 + a", the 'a' refers to a LoadVariable
+    '''
+    _fields = ['name']     
+
+
+class LoadArray(AST):
+    '''
+    An array appearing the right hand side of an assignment.
+    For example in the expression "2 + a[n]"
+    '''
+    _fields = ['name', 'index']
+
+class StoreArray(AST):
+    '''
+    An array appearing the left-hand-side of an assignment.
+    For example in the expression "a[n] = 2"
+    '''
+    _fields = ['name', 'index']
+    
+class Unaryop(AST):
+    '''
+    A unary operator such as +expr or -expr
+    '''
+    _fields = ['op','expr']         
+
+class Binop(AST):
+    '''
+    A binary operator such as expr + expr.
+    '''
+    _fields = ['op','left','right'] 
+
+class FunctionCall(AST):
+    '''
+    A function call such as foo(2,3)
+    '''
+    _fields = ['name','arglist']
+
+class AssignmentStatement(AST):
+    '''
+    An assignment statement such as x = expr.  The left hand side
+    is a location and the right hand side is an expression.
+    '''
+    _fields = ['store_location','expr']   
+
+class PrintStatement(AST):
+    '''
+    A print statement such as print(expr)
+    '''
+    _fields = ['expr']          # YOU MUST DEFINE
 
 
 class Statements(AST):
-    """
-    statements can be more than one.
-    """
-    _fields = ['statements']
+    '''
+    A sequence of zero or more statements.
+    '''
+    _fields = ['statements']          # YOU MUST DEFINE
 
-    def append(self, stmt):
+    def append(self,stmt):
         self.statements.append(stmt)
 
     def __len__(self):
         return len(self.statements)
 
 
-class PrintStatement(AST):
+class Program(AST):
     '''
-    print expression ;
+    A node representing an entire program.  A program
+    consists of a series of statements.
+    '''
+    _fields = ['statements'] 
+
+class VarDeclaration(AST):
+    '''
+    A variable declaration such as var x int = 42;
+    '''
+    _fields = ['name','typename','expr']
+    
+class ConstDeclaration(AST):
+    '''
+    A constant declaration such as const pi = 3.14159;
+    '''
+    _fields = ['name','expr']
+
+class ParmDeclaration(AST):
+    '''
+    A parameter declaration of name and type
+    '''
+    _fields = ['name', 'typename']
+
+class FunctionPrototype(AST):
+    '''
+    A function prototype giving the name and types of the function.
+    '''
+    _fields = ['name', 'parameters', 'typename']
+
+class ExternFunctionDeclaration(AST):
+    '''
+    An external function declaration.   extern func foo(x int) int;
+    '''
+    _fields = ['prototype']
+
+# Conditions and while loops (Project 7)
+class IfElseStatement(AST):
+    '''
+    An if-else statement
+    '''
+    _fields = ['condition', 'if_statements','else_statements']
+
+class WhileStatement(AST):
+    '''
+    A while-loop
+    '''
+    _fields = ['condition', 'statements']
+
+# Functions (Project 8)
+class ReturnStatement(AST):
+    '''
+    Return statement
     '''
     _fields = ['expr']
 
-
-class Literal(AST):
-    """
-    A literal value such as 2, 2.5, or "two"
-    """
-    _fields = ['value', 'typename']
-
-
-class ConstDeclaration(AST):
-    """
-    A constant declaration such as const pi = 3.14159;
-    """
-    _fields = ['name', 'expr']
-
-
-class VarDeclaration(AST):
-    """
-    Assigning something to a variable: float pi = 3.14159;
-    """
-    _fields = ['name', 'typename', 'expr']
-
-
-class FuncDeclaration(AST):
-    """
-    reading in func(something)
-    """
-    _fields = ['name', 'expr']
-
-class ReadLocation(AST):
-    """
-    Location of item.
-    """
-    _fields = ['location']
-
-
-class VarLocation(AST):
-    """
-    Location of variable?
-    """
-    _fields = ['name']
-
-
-class UnaryOp(AST):
-    """
-    -1
-    """
-    _fields = ['op', 'right']
-
-
-class BinOp(AST):
+class FunctionDeclaration(AST):
     '''
-    A Binary operator such as 2 + 3 or x * y
+    A definition of a function
     '''
-    _fields = ['op', 'left', 'right']
+    _fields = ['prototype','statements']
 
 # ----------------------------------------------------------------------
 #                  DO NOT MODIFY ANYTHING BELOW HERE

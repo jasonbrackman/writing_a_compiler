@@ -2,3 +2,7 @@ Git Examples:
     git status
     git diff gone
     q to escape out
+
+PIP:
+    pip install sly
+

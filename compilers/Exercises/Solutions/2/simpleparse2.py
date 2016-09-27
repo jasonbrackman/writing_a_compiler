@@ -1,18 +1,17 @@
 # simpleparse.py
 
 from sly import Parser
+
 from simplelex import SimpleLexer
 from simpleast import *
 
-
 class SimpleParser(Parser):
-    # Specify the tokens set (terminals)
-    debugfile = 'debug_simpleparser.out'
+
     tokens = SimpleLexer.tokens
 
     # Grammar:
     #
-    # assignment ::=  ID ASSIGN expr
+    # assignment ::=  ID ASSIGN expr 
     #
     # expr       ::= expr PLUS term
     #             |  term
@@ -62,3 +61,6 @@ if __name__ == '__main__':
     parser = SimpleParser()
     result = parser.parse(lexer.tokenize(text))
     print(result)
+    print('location:', ,result.location)
+    print('value:', result.value)
+

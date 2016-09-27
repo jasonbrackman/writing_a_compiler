@@ -1,0 +1,3 @@
+/* hello.g */
+
+Hello World

@@ -1,18 +1,16 @@
 # simpleparse.py
 
 from sly import Parser
-from simplelex import SimpleLexer
-from simpleast import *
 
+from simplelex import SimpleLexer
 
 class SimpleParser(Parser):
-    # Specify the tokens set (terminals)
-    debugfile = 'debug_simpleparser.out'
+
     tokens = SimpleLexer.tokens
 
     # Grammar:
     #
-    # assignment ::=  ID ASSIGN expr
+    # assignment ::=  ID ASSIGN expr 
     #
     # expr       ::= expr PLUS term
     #             |  term
@@ -26,35 +24,36 @@ class SimpleParser(Parser):
 
     @_('ID ASSIGN expr')
     def assignment(self, p):
-        return Assignment(p.ID, p.expr)
+        return p
 
     @_('expr PLUS term')
     def expr(self, p):
-        return BinOp('+', p.expr, p.term)
+        return p
 
     @_('term')
     def expr(self, p):
-        return p.term
+        return p
 
     @_('term TIMES factor')
     def term(self, p):
-        return BinOp('*', p.term, p.factor)
+        return p
 
     @_('factor')
     def term(self, p):
-        return p.factor
+        return p
 
     @_('LPAREN expr RPAREN')
     def factor(self, p):
-        return p.expr
+        return p
 
     @_('NUMBER')
     def factor(self, p):
-        return Number(p.NUMBER)
+        return p
 
     @_('ID')
     def factor(self, p):
-        return Identifier(p.ID)
+        return p
+
 
 if __name__ == '__main__':
     text = 'a = 2 + 3 * (4 + 5)'
@@ -62,3 +61,4 @@ if __name__ == '__main__':
     parser = SimpleParser()
     result = parser.parse(lexer.tokenize(text))
     print(result)
+
