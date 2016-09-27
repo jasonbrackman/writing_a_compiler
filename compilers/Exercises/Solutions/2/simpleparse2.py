@@ -61,6 +61,6 @@ if __name__ == '__main__':
     parser = SimpleParser()
     result = parser.parse(lexer.tokenize(text))
     print(result)
-    print('location:', ,result.location)
+    print('location:', result.location)
     print('value:', result.value)
 

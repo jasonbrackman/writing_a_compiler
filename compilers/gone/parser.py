@@ -152,42 +152,48 @@ class GoneParser(Parser):
     def program(self, p):
         return Program([])
 
-    @_('statement')
-    def statements(self, p):
-        return Statements([p.statement])
-
     @_('statements statement')
     def statements(self, p):
         p.statements.append(p.statement)
         return p.statements
 
-    @_('print_statement',
-       'const_declaration',
+    @_('statement')
+    def statements(self, p):
+        return Statements([p.statement])
+
+    @_('const_declaration',
        'var_declaration',
+       'print_statement',
+       'extern_declaration',
        'func_declaration')
     def statement(self, p):
         return p[0]
 
     @_('FUNC LPAREN expression RPAREN VAR')
-    def func_declaration(self,p):
-        """
-        Python uses:
-        "Module(
-            body=[Expr(
-                        value=Call(
-                                    func=Name(
-                                                id='min', ctx=Load()
-                                             ),
-                                    args=[List(elts=[Num(n=0), Num(n=1)], ctx=Load())], keywords=[]))])"
-        :param p:
-        :return:
-        """
-        return FuncDeclaration(p.ID, p.args)
+    def func_declaration(self, p):
+        return p.ID
 
-    @_('args')
-    def expression(self,p):
+    @_('ID LPAREN arguments RPAREN')
+    def expression(self, p):
+        return FunctionCall(p.ID, p.arguments)
+
+    @_('EXTERN FUNC expression ID SEMI')
+    def extern_declaration(self, p):
+
+        return ExternFunctionDeclaration(None, lineno=p.lineno)
+
+    @_('ID LPAREN RPAREN')
+    def expression(self, p):
+        return FunctionCall(p.ID, None)
+
+    @_('arguments COMMA expression')
+    def arguments(self, p):
+        p.arguments.append(p.expression)
+        return p.arguments
+
+    @_('expression')
+    def arguments(self, p):
         return [p.expression]
-
 
     @_('PRINT expression SEMI')
     def print_statement(self, p):
@@ -256,7 +262,6 @@ class GoneParser(Parser):
     def expression(self, p):
         return UnaryOp(p[0], p.expression, lineno=p.lineno)
 
-
     @_('LPAREN expression RPAREN',
        'LBRACKET expression RBRACKET',
        'LBRACE expression RBRACE')
@@ -281,9 +286,9 @@ class GoneParser(Parser):
 
 
 def parse(source):
-    '''
+    """
     Parse source code into an AST. Return the top of the AST tree.
-    '''
+    """
     lexer = GoneLexer()
     parser = GoneParser()
     ast = parser.parse(lexer.tokenize(source))
@@ -297,7 +302,7 @@ def main():
 
     import sys
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest5.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest6.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')

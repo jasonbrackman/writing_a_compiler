@@ -79,9 +79,9 @@ class Statements(AST):
 
 
 class PrintStatement(AST):
-    '''
+    """
     print expression ;
-    '''
+    """
     _fields = ['expr']
 
 
@@ -106,11 +106,25 @@ class VarDeclaration(AST):
     _fields = ['name', 'typename', 'expr']
 
 
-class FuncDeclaration(AST):
-    """
-    reading in func(something)
-    """
-    _fields = ['name', 'expr']
+class FunctionDeclaration(AST):
+    '''
+    A definition of a function
+    '''
+    _fields = ['prototype', 'statements']
+
+class ExternFunctionDeclaration(AST):
+    '''
+    An external function declaration.   extern func foo(x int) int;
+    '''
+    _fields = ['prototype']
+
+class FunctionCall(AST):
+    '''
+    A function call such as foo(2,3)
+    '''
+
+    _fields = ['name', 'arguments']
+
 
 class ReadLocation(AST):
     """
