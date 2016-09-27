@@ -116,7 +116,13 @@ class ExternFunctionDeclaration(AST):
     '''
     An external function declaration.   extern func foo(x int) int;
     '''
-    _fields = ['prototype']
+    _fields = ['func_prototype']
+
+class ParmDeclaration(AST):
+    '''
+    A parameter declaration of name and type
+    '''
+    _fields = ['name', 'typename']
 
 class FunctionCall(AST):
     '''
@@ -125,6 +131,11 @@ class FunctionCall(AST):
 
     _fields = ['name', 'arguments']
 
+class FunctionPrototype(AST):
+    '''
+    A function prototype giving the name and types of the function.
+    '''
+    _fields = ['name', 'parameters', 'typename']
 
 class ReadLocation(AST):
     """

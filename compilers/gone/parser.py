@@ -144,13 +144,17 @@ class GoneParser(Parser):
     #
     # Afterwards, add features by looking at the code in Tests/parsetest1-7.g
 
-    @_('statements')
+    @_('basicblock')
     def program(self, p):
-        return Program(p.statements)
+        return Program(p.basicblock)
 
-    @_('')
-    def program(self, p):
-        return Program([])
+    @_('statements')
+    def basicblock(self, p):
+        return p.statements
+
+    @_('empty')
+    def basicblock(self, p):
+        return None
 
     @_('statements statement')
     def statements(self, p):
@@ -169,18 +173,39 @@ class GoneParser(Parser):
     def statement(self, p):
         return p[0]
 
-    @_('FUNC LPAREN expression RPAREN VAR')
+    @_('func_prototype LBRACE basicblock RBRACE')
     def func_declaration(self, p):
-        return p.ID
+        return FunctionDeclaration(p.func_prototype, p.basicblock, lineno=p.lineno)
+    #
 
     @_('ID LPAREN arguments RPAREN')
     def expression(self, p):
         return FunctionCall(p.ID, p.arguments)
 
-    @_('EXTERN FUNC expression ID SEMI')
+    @_('EXTERN func_prototype SEMI')
     def extern_declaration(self, p):
+        return ExternFunctionDeclaration(p.func_prototype, lineno=p.lineno)
 
-        return ExternFunctionDeclaration(None, lineno=p.lineno)
+    @_('FUNC ID LPAREN parameters RPAREN datatype')
+    def func_prototype(self, p):
+        return FunctionPrototype(p.ID, p.parameters, p.datatype, lineno=p.lineno)
+
+    @_('FUNC ID LPAREN RPAREN datatype')
+    def func_prototype(self, p):
+        return FunctionPrototype(p.ID, [], p.datatype, lineno=p.lineno)
+
+    @_('parameters COMMA parm_declaration')
+    def parameters(self, p):
+        p.parameters.append(p.parm_declaration)
+        return p.parameters
+
+    @_('parm_declaration')
+    def parameters(self, p):
+        return [p.parm_declaration]
+
+    @_('ID datatype')
+    def parm_declaration(self, p):
+        return ParmDeclaration(p.ID, p.datatype, lineno=p.lineno)
 
     @_('ID LPAREN RPAREN')
     def expression(self, p):
@@ -268,6 +293,10 @@ class GoneParser(Parser):
     def expression(self, p):
         return p.expression
 
+    @_('')
+    def empty(self, p):
+        return None
+
     # ----------------------------------------------------------------------
     # DO NOT MODIFY
     #
@@ -302,7 +331,7 @@ def main():
 
     import sys
 
-    #sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest6.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest6.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')
