@@ -159,7 +159,8 @@ class GoneParser(Parser):
         p.statements.append(p.statement)
         return p.statements
 
-    @_('print_statement')
+    @_('print_statement',
+       'const_declaration')
     def statement(self, p):
         return p[0]
 
@@ -167,28 +168,41 @@ class GoneParser(Parser):
     def print_statement(self, p):
         return PrintStatement(p.expression, lineno=p.lineno)
 
+    @_('CONST ID ASSIGN expression SEMI')
+    def const_declaration(self, p):
+        return ConstDeclaration(p.ID, p.expression, lineno=p.lineno)
+
     @_('literal')
     def expression(self, p):
         return p.literal
 
     @_('INTEGER')
     def literal(self, p):
-        return Literal(p.INTEGER, 'int')
+        return Literal(p.INTEGER, 'int', lineno=p.lineno)
 
     @_('FLOAT')
     def literal(self, p):
-        return Literal(p.FLOAT, 'float')
+        return Literal(p.FLOAT, 'float', lineno=p.lineno)
 
     @_('STRING')
     def literal(self, p):
-        return Literal(p.STRING, 'string')
+        return Literal(p.STRING, 'string', lineno=p.lineno)
 
     @_('expression PLUS expression',
        'expression MINUS expression',
        'expression DIVIDE expression',
        'expression TIMES expression')
     def expression(self, p):
-        return BinOp(p[1], p[0], p[2])
+        return BinOp(p[1], p[0], p[2], lineno=p.lineno)
+
+    @_('MINUS expression',
+       'PLUS expression')
+    def expression(self, p):
+        return UnaryOp(p[0], p.expression, lineno=p.lineno)
+
+    @_('LPAREN expression RPAREN')
+    def expression(self, p):
+        return p.expression
 
 
     # ----------------------------------------------------------------------
@@ -200,11 +214,12 @@ class GoneParser(Parser):
         if p:
             error(p.lineno, "Syntax error in input at token '%s'" % p.value)
         else:
-            error('EOF','Syntax error. No more input.')
+            error('EOF', 'Syntax error. No more input.')
 
 # ----------------------------------------------------------------------
 #                     DO NOT MODIFY ANYTHING BELOW HERE
 # ----------------------------------------------------------------------
+
 
 def parse(source):
     '''
@@ -215,29 +230,24 @@ def parse(source):
     ast = parser.parse(lexer.tokenize(source))
     return ast
 
+
 def main():
     '''
     Main program. Used for testing.
     '''
-    #import os
+
     import sys
 
-    #script = r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Test/parsetest1.g'
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
 
-    #sys.argv = [os.path.realpath(__file__), script]
-    #print(sys.argv[1])
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')
         raise SystemExit(1)
 
     # Parse and create the AST
     ast = parse(open(sys.argv[1]).read())
-
-    # Output the resulting parse tree structure
-    for depth, node in flatten(ast):
-        print('%s%s' % (' '*(4*depth), node))
+    ast.dump()
 
 if __name__ == '__main__':
     """python3 -m gone.parser Tests/parsetest1.g"""
-
     main()

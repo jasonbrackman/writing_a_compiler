@@ -208,7 +208,7 @@ class GoneLexer(Lexer):
     #
     # The value should be converted to a Python float when lexed
 
-    @_(r'(\d+\.\d+)|(\.\d+)')
+    @_(r'([0-9]+\.[0-9]+)|(\.\d+)|(\d+\.)')
     def FLOAT(self, t):
         t.value = float(t.value)
         return t
@@ -266,7 +266,7 @@ class GoneLexer(Lexer):
         # if t.value == 'var':
         #     t.type = 'VAR"
 
-        if t.value == 'print':
+        if t.value in self.keywords:
             t.type = t.value.upper()
 
         return t
@@ -296,6 +296,9 @@ def main():
     Main program. For debugging purposes.
     '''
     import sys
+
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
+
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.tokenizer filename\n")
         raise SystemExit(1)

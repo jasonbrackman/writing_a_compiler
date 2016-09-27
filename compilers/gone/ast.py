@@ -82,11 +82,27 @@ class PrintStatement(AST):
     '''
     _fields = ['expr']
 
+
 class Literal(AST):
-    '''
+    """
     A literal value such as 2, 2.5, or "two"
-    '''
+    """
     _fields = ['value', 'typename']
+
+
+class ConstDeclaration(AST):
+    """
+    A constant declaration such as const pi = 3.14159;
+    """
+    _fields = ['name', 'expr']
+
+
+class UnaryOp(AST):
+    """
+    -1
+    """
+    _fields = ['op', 'right']
+
 
 class BinOp(AST):
     '''
