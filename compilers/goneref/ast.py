@@ -69,6 +69,12 @@ class LoadVariable(AST):
     '''
     _fields = ['name']     
 
+class StoreVariable(AST):
+    '''
+    A variable name being used as the left-hand-side of an assignment.
+    For example, in an assignment a = 2, the 'a' refers to StoreVariable.
+    '''
+    _fields = ['name']       
 
 class LoadArray(AST):
     '''
