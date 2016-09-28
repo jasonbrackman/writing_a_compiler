@@ -92,6 +92,20 @@ class Literal(AST):
     _fields = ['value', 'typename']
 
 
+class Typename(AST):
+    '''
+    The name of a datatype such as 'int', 'float', or 'string'
+    '''
+    _fields = ['name']
+
+
+class StoreVariable(AST):
+    '''
+    A variable name being used as the left-hand-side of an assignment.
+    For example, in an assignment a = 2, the 'a' refers to StoreVariable.
+    '''
+    _fields = ['name']
+
 class ConstDeclaration(AST):
     """
     A constant declaration such as const pi = 3.14159;
@@ -130,6 +144,13 @@ class FunctionCall(AST):
     '''
 
     _fields = ['name', 'arguments']
+
+class AssignmentStatement(AST):
+    '''
+    An assignment statement such as x = expr.  The left hand side
+    is a location and the right hand side is an expression.
+    '''
+    _fields = ['store_location','expr']
 
 class FunctionPrototype(AST):
     '''

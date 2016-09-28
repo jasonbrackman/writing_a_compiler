@@ -169,6 +169,7 @@ class GoneParser(Parser):
        'var_declaration',
        'print_statement',
        'extern_declaration',
+       'assign_statement',
        'func_declaration')
     def statement(self, p):
         return p[0]
@@ -235,21 +236,28 @@ class GoneParser(Parser):
     @_('VAR ID datatype SEMI')
     def var_declaration(self, p):
         """
-        var x int;
+            var x int;
         """
         return VarDeclaration(p.ID, p.datatype, None)
 
     @_('VAR ID datatype ASSIGN expression SEMI')
     def var_declaration(self, p):
-        """ float x = 2;"""
+        """
+            var x float = 2;
+        """
         return VarDeclaration(p.ID, p.datatype, p.expression, lineno=p.lineno)
 
-    @_('ID ASSIGN expression SEMI')
-    def var_declaration(self, p):
-        """
-        x = 1 + 2 * 3;
-        """
-        return VarDeclaration(p.ID, None, p.expression, lineno=p.lineno)
+    @_('store_location ASSIGN expression SEMI')
+    def assign_statement(self, p):
+        return AssignmentStatement(p.store_location, p.expression, lineno=p.lineno)
+
+    @_('ID')
+    def store_location(self, p):
+        return StoreVariable(p.ID, lineno=p.lineno)
+
+    @_('ID LBRACKET expression RBRACKET')
+    def store_location(self, p):
+        return StoreArray(p.ID, p.expression, lineno=p.lineno)
 
     @_('ID')
     def datatype(self, p):

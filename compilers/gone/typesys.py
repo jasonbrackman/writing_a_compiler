@@ -23,35 +23,34 @@ later--ideally you don't want to change everything else when you do.
 '''
 
 # List of builtin types.  These will get added to the symbol table
-builtin_types = [ 'int', 'float', 'string' ]
+builtin_types = ['int', 'float', 'string']
+
+# Error type (default for the dict if not present)
+error_type = None
 
 # Dict mapping all valid binary operations to a result type
 _supported_binops = {
     # You define
-    }
+    ('int', '-', 'int'): 'int',
+    ('int', '+', 'int'): 'int'
+}
 
 # Dict mapping all valid unary operations to result type
 _supported_unaryops = {
     # You define
-    }
-    
+}
+
+
 def check_binop(left_type, op, right_type):
     ''' 
     Check the validity of a binary operator. 
     '''
     # You define
+    return _supported_binops.get((left_type, op, right_type), error_type)
+
 
 def check_unaryop(op, type):
     '''
     Check the validity of a unary operator. 
     '''
     # You define
-
-
-
-
-          
-
-
-
-

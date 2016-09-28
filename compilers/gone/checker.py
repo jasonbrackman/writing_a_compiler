@@ -171,9 +171,9 @@ It's not always clear how to best organize all of that.  So, expect to
 fumble around a bit at first.
 '''
 
-from .errors import error
-from .ast import *
-from .typesys import check_binop, check_unaryop, builtin_types
+from gone.errors import error
+from gone.ast import *
+from gone.typesys import check_binop, check_unaryop, builtin_types
 
 class SymbolTable(object):
     '''
@@ -183,7 +183,18 @@ class SymbolTable(object):
     extra functionality later so it's probably better to make it
     a separate class as opposed to using a dict directly.
     '''
-    pass
+    def __init__(self):
+        self.symbols = {}
+
+    def add(self, name, node):
+        if name not in self.symbols:
+            self.symbols[name] = node
+        else:
+            error(node.lineno, "{} already exists".format(name))
+
+    def print(self):
+        for k, v in self.symbols.items():
+            print(k, v)
 
 class CheckProgramVisitor(NodeVisitor):
     '''
@@ -193,61 +204,104 @@ class CheckProgramVisitor(NodeVisitor):
     adjust the method names here if you've picked different AST node names.
     '''
     def __init__(self):
-        # Initialize the symbol table
-        pass
+        self.global_symtab = SymbolTable()
+        self.local_symtab = None
+        self.current_function = None
 
         # Add built-in type names to the symbol table
-        pass
+        for item in builtin_types:
+            self.symtab_add(item, item)
 
-    def visit_Unaryop(self, node):
+    # Method for adding a symbol to the appropriate symbol table
+    def symtab_add(self, name, node):
+        if self.local_symtab:
+            self.local_symtab.add(name, node)
+        else:
+            self.global_symtab.add(name, node)
+
+    def visit_UnaryOp(self, node):
         # 1. Make sure that the operation is supported by the type
         # 2. Set the result type 
         #
         # Hint: Use the check_unaryop() function in typesys.py
-        pass
 
-    def visit_Binop(self, node):
+        print("visit_unaryop", node)
+
+    def visit_BinOp(self, node):
         # 1. Make sure left and right operands have the same type
         # 2. Make sure the operation is supported
         # 3. Assign the result type
         #
         # Hint: Use the check_binop() function in typesys.py
-        pass
+        print('visit_Binop', node)
+        self.visit(node.left)
+        self.visit(node.right)
+
+        node.type = check_binop(node.left.type, node.op, node.right.type)
+        if node.type is None:
+            error(node.lineno, 'Type error: %s %s %s' % (node.left.type, node.op, node.right.type))
 
     def visit_AssignmentStatement(self, node):
         # 1. Make sure the location of the assignment is defined
         # 2. Visit the expression on the right hand side
         # 3. Check that the types match
-        pass
+        print("visit_assignmentStatement", node)
 
     def visit_ConstDeclaration(self, node):
         # 1. Check that the constant name is not already defined
         # 2. Add an entry to the symbol table
-        pass
+        print("visit_constDeclaration", node)
+        self.visit(node.expr)
+        node.type = node.expr.typename
+
+        self.global_symtab.add(node.name, node)
+        node.is_global = False if self.current_function else True
 
     def visit_VarDeclaration(self, node):
         # 1. Check that the variable name is not already defined
         # 2. Add an entry to the symbol table
         # 3. Check that the type of the expression (if any) is the same
-        pass
-    
+        # 4. If there is no expression, set an initial value for the value
+        print('visit_VarDeclaration:', node)
+
+        if node.typename is None:
+            if node.expr:
+                self.visit(node.expr)
+        else:
+            try:
+                self.visit(node.typename)
+
+                node.type = node.typename.type
+                if node.expr:
+                    self.visit(node.expr)
+                    if node.expr.type and node.expr.type != node.type:
+                        error(node.lineno, 'Type error %s = %s' % (node.type, node.expr.type))
+                self.symtab_add(node.name, node)
+                node.is_global = False if self.current_function else True
+            except Exception as e:
+                print(e, node)
+
     def visit_Typename(self, node):
         # 1. Make sure the typename is valid and that it's actually a type
-        pass
+        print('visit_Typename:', node)
+
 
     def visit_LoadVariable(self, node):
         # 1. Make sure the location is a valid variable or constant value
         # 2. Assign the type of the variable to the node
-        pass
+        print('visit_LoadVariable:', node)
 
     def visit_StoreVariable(self, node):
         # 1. Make sure the location can be assigned
         # 2. Assign the appropriate type
-        
+        print('visit_StoreVariable:', node)
+
     def visit_Literal(self, node):
         # 1. Attach an appropriate type to the literal
-        pass
+        print('visit_Literal:', node)
 
+    def visit_PrintStatement(self, node):
+        print('visit_PrintStatement:', node)
     # You will need to add more methods here in Projects 5-8.
 
 # ----------------------------------------------------------------------
@@ -260,13 +314,16 @@ def check_program(ast):
     '''
     checker = CheckProgramVisitor()
     checker.visit(ast)
+    #checker.global_symtab.print()
 
 def main():
     '''
     Main program. Used for testing
     '''
     import sys
-    from .parser import parse
+    from gone.parser import parse
+
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/good.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.checker filename\n')
