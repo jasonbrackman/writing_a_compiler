@@ -1,5 +1,5 @@
 # gone/typesys.py
-"""
+'''
 Gone Type System
 ================
 This file implements basic features of the Gone type system.  There is a
@@ -20,49 +20,47 @@ Note: You will need to have some coordination with code the checker.py
 module. Try to keep the inner workings of types as isolated as possible.
 Make helper functions as needed.  You may need to change this file
 later--ideally you don't want to change everything else when you do.
-"""
+'''
 
 # List of builtin types.  These will get added to the symbol table
-builtin_types = ['int', 'float', 'string']
-
-# Error type (default for the dict if not present)
-error_type = None
+builtin_types = [ 'int', 'float', 'string' ]
 
 # Dict mapping all valid binary operations to a result type
 _supported_binops = {
-    # You define
-    ('int', '-', 'int'): 'int',
-    ('int', '+', 'int'): 'int',
-    ('int', '*', 'int'): 'int',
-    ('int', '/', 'int'): 'int',
-    ('float', '-', 'float'): 'float',
-    ('float', '+', 'float'): 'float',
-    ('float', '*', 'float'): 'float',
-    ('float', '/', 'float'): 'float',
-    ('string', '+', 'string'): 'string'
-}
+    ('int', '+', 'int') : 'int',
+    ('int', '-', 'int') : 'int',
+    ('int', '*', 'int') : 'int',
+    ('int', '/', 'int') : 'int',
 
-# Dict mapping all valid unary operations to result type
-_supported_unaryops = {
-    # You define
-    ('+', 'int'): 'int',
-    ('-', 'int'): 'int',
-    ('+', 'float'): 'float',
-    ('-', 'float'): 'float'
-}
+    ('float', '+', 'float') : 'float',
+    ('float', '-', 'float') : 'float',
+    ('float', '*', 'float') : 'float',
+    ('float', '/', 'float') : 'float',
+
+    ('string', '+', 'string') : 'string',
+
+    }
 
 
 def check_binop(left_type, op, right_type):
-    ''' 
-    Check the validity of a binary operator. 
     '''
-    # You define
-    return _supported_binops.get((left_type, op, right_type), error_type)
+    Check the validity of a binary operator. Returns the result type
+    if supported, None otherwise.
+    '''
+    return _supported_binops.get((left_type, op, right_type))
 
+# Dict mapping all valid unary operations to result type
+_supported_unaryops = {
+    ('+', 'int') : 'int',
+    ('-', 'int') : 'int',
+
+    ('+', 'float') : 'float',
+    ('-', 'float') : 'float',
+    }
 
 def check_unaryop(op, type):
     '''
-    Check the validity of a unary operator. 
+    Check the validity of a unary operator. Returns the
+    result type if supported, None otherwise.
     '''
-    # You define
-    return _supported_unaryops.get((op, type), error_type)
+    return _supported_unaryops.get((op, type))

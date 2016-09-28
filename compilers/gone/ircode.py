@@ -326,7 +326,7 @@ def main():
 
     # !!! This part will need to be changed slightly in Projects 7/8
     for instr in code:
-        print(code)
+        print(instr)
 
 if __name__ == '__main__':
     main()

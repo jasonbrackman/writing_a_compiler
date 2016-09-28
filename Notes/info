@@ -6,3 +6,8 @@ Git Examples:
 PIP:
     pip install sly
 
+LLVM Compile:
+    0. Create _llvm.py and main.c
+    1. python3 _llvm.py > output.ll
+    2. clang  main.c output.ll
+    3. ./a.out (to run)

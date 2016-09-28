@@ -16,10 +16,9 @@ class AST(object):
     define the _fields attribute which lists the names of stored
     attributes.   The __init__() method below takes positional
     arguments and assigns them to the appropriate fields.  Any
-    additional arguments specified as keywords are also assigned. 
+    additional arguments specified as keywords are also assigned.
     '''
     _fields = []
-
     def __init__(self, *args, **kwargs):
         assert len(args) == len(self._fields)
         for name, value in zip(self._fields, args):
@@ -29,11 +28,19 @@ class AST(object):
             setattr(self, name, value)
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, ' '.join(['%s=%s' % (f, getattr(self, f)) for f in self._fields]))
+        vals = [getattr(self, name) for name in self._fields]
+        valstrs = []
+        for val in vals:
+            if not isinstance(val, AST):
+                if not isinstance(val, list):
+                    valstrs.append(repr(val))
+                else:
+                    valstrs.append('[...]')
+            else:
+                valstrs.append(type(val).__name__)
 
-    def dump(self):
-        for depth, node in flatten(self):
-            print('%s%s' % (' ' * (4 * depth), node))
+        argstr = ', '.join('%s=%s' % r for r in zip(self._fields, valstrs))
+        return '%s(%s)' % (type(self).__name__, argstr)
 
 # ----------------------------------------------------------------------
 # Specific AST nodes.
@@ -57,132 +64,56 @@ class AST(object):
 #
 # ----------------------------------------------------------------------
 
-
 class Program(AST):
-    """
-    program expression
-    """
+    '''
+    A list of statements
+    '''
     _fields = ['statements']
-
-
-class Statements(AST):
-    """
-    statements can be more than one.
-    """
-    _fields = ['statements']
-
-    def append(self, stmt):
-        self.statements.append(stmt)
-
-    def __len__(self):
-        return len(self.statements)
-
 
 class PrintStatement(AST):
-    """
+    '''
     print expression ;
-    """
+    '''
     _fields = ['expr']
 
-
-class Literal(AST):
-    """
-    A literal value such as 2, 2.5, or "two"
-    """
-    _fields = ['value', 'typename']
-
-
-class Typename(AST):
-    '''
-    The name of a datatype such as 'int', 'float', or 'string'
-    '''
-    _fields = ['name']
-
-
-class StoreVariable(AST):
-    '''
-    A variable name being used as the left-hand-side of an assignment.
-    For example, in an assignment a = 2, the 'a' refers to StoreVariable.
-    '''
-    _fields = ['name']
-
-
 class ConstDeclaration(AST):
-    """
-    A constant declaration such as const pi = 3.14159;
-    """
-    _fields = ['name', 'expr']
-
+    '''
+    const pi = 3.14159;
+    '''
+    _fields = ['name', 'value']
 
 class VarDeclaration(AST):
-    """
-    Assigning something to a variable: float pi = 3.14159;
-    """
-    _fields = ['name', 'typename', 'expr']
+    '''
+    var x int = 42;
+    '''
+    _fields = ['name', 'type', 'value']
 
-
-class FunctionDeclaration(AST):
-    '''
-    A definition of a function
-    '''
-    _fields = ['prototype', 'statements']
-
-
-class ExternFunctionDeclaration(AST):
-    '''
-    An external function declaration.   extern func foo(x int) int;
-    '''
-    _fields = ['func_prototype']
-
-
-class ParmDeclaration(AST):
-    '''
-    A parameter declaration of name and type
-    '''
-    _fields = ['name', 'typename']
-
-class FunctionCall(AST):
-    '''
-    A function call such as foo(2,3)
-    '''
-
-    _fields = ['name', 'arguments']
-
-class AssignmentStatement(AST):
-    '''
-    An assignment statement such as x = expr.  The left hand side
-    is a location and the right hand side is an expression.
-    '''
+class AssignStatement(AST):
     _fields = ['location', 'value']
 
-
-class FunctionPrototype(AST):
-    '''
-    A function prototype giving the name and types of the function.
-    '''
-    _fields = ['name', 'parameters', 'typename']
-
-
-class ReadLocation(AST):
-    """
-    Location of item.
-    """
-    _fields = ['location']
-
-
 class VarLocation(AST):
-    """
-    Location of variable?
-    """
     _fields = ['name']
 
+class ArrayLocation(AST):
+    _fields = ['name', 'index']
 
-class UnaryOp(AST):
-    """
-    -1
-    """
-    _fields = ['op', 'right']
+class FunctionCall(AST):
+    _fields = ['name', 'args']
 
+class FunctionPrototype(AST):
+    _fields = ['name', 'parmlist', 'type']
+
+class ExternFunction(AST):
+    _fields = ['prototype']
+
+class Parm(AST):
+    _fields = ['name', 'type']
+
+class Literal(AST):
+    '''
+    A literal value such as 2, 2.5, or "two"
+    '''
+    _fields = ['value', 'type']
 
 class BinOp(AST):
     '''
@@ -190,15 +121,49 @@ class BinOp(AST):
     '''
     _fields = ['op', 'left', 'right']
 
+class UnaryOp(AST):
+    '''
+    A Unary operator such as -3 or +3
+    '''
+    _fields = ['op', 'value']
+
+class Typename(AST):
+    '''
+    The name of a type. For example, 'int', 'float'
+    '''
+    _fields = ['name']
+
+class ArrayType(AST):
+    '''
+    The type of an array
+    '''
+    _fields = ['name', 'size']
+
 # ----------------------------------------------------------------------
 #                  DO NOT MODIFY ANYTHING BELOW HERE
 # ----------------------------------------------------------------------
 
 # The following classes for visiting and rewriting the AST are taken
-# from Python's ast module.   
+# from Python's ast module.
+
+def validate_visitor(cls):
+    '''
+    You give me a class cls, validate the visit_* methods
+    '''
+    for key in cls.__dict__:
+        if key.startswith('visit_'):
+            if key[6:] not in globals() or not issubclass(globals()[key[6:]], AST):
+                raise TypeError('Bad visitor method: %s' % key)
+
+    return cls
+
+# Metaclass
+class NodeVisitorMeta(type):
+    def __init__(cls, *args):
+        validate_visitor(cls)
 
 # DO NOT MODIFY
-class NodeVisitor(object):
+class NodeVisitor(metaclass=NodeVisitorMeta):
     '''
     Class for visiting nodes of the parse tree.  This is modeled after
     a similar class in the standard library ast.NodeVisitor.  For each
@@ -231,7 +196,7 @@ class NodeVisitor(object):
             return visitor(node)
         else:
             return None
-    
+
     def generic_visit(self,node):
         '''
         Method executed if no applicable visit_ method can be found.

@@ -175,14 +175,15 @@ from gone.errors import error
 from gone.ast import *
 from gone.typesys import check_binop, check_unaryop, builtin_types
 
+
 class SymbolTable(object):
-    '''
+    """
     Class representing a symbol table.   To start, it should provide
     functionality for adding and looking up objects associated with
     identifiers.   Think Python dictionaries.  You might want to add
     extra functionality later so it's probably better to make it
     a separate class as opposed to using a dict directly.
-    '''
+    """
     def __init__(self):
         self.symbols = {}
 
@@ -192,9 +193,19 @@ class SymbolTable(object):
         else:
             error(node.lineno, "{} already exists".format(name))
 
+    def is_symbol(self, name):
+        return True if name in self.symbols else False
+
+    def get_type(self, name):
+        _type = None
+        if self.is_symbol(name):
+            _type = self.symbols[name].type
+        return _type
+
+
     def print(self):
         for k, v in self.symbols.items():
-            print(k, v)
+            print(k, getattr(v, 'type', v))
 
 class CheckProgramVisitor(NodeVisitor):
     '''
@@ -224,8 +235,12 @@ class CheckProgramVisitor(NodeVisitor):
         # 2. Set the result type 
         #
         # Hint: Use the check_unaryop() function in typesys.py
+        self.visit(node.right)
+        node.type = check_unaryop(node.op, node.right.type)
+        if node.type is None:
+            error(node.lineno, 'Type error: %s %s' % (node.op, node.right.type))
 
-        print("visit_unaryop", node)
+        # print("visit_unaryop", node, node.type)
 
     def visit_BinOp(self, node):
         # 1. Make sure left and right operands have the same type
@@ -233,58 +248,63 @@ class CheckProgramVisitor(NodeVisitor):
         # 3. Assign the result type
         #
         # Hint: Use the check_binop() function in typesys.py
-        print('visit_Binop', node)
+
         self.visit(node.left)
         self.visit(node.right)
 
         node.type = check_binop(node.left.type, node.op, node.right.type)
         if node.type is None:
-            error(node.lineno, 'Type error: %s %s %s' % (node.left.type, node.op, node.right.type))
+            error(node.lineno, 'BinOp Type error: %s %s %s' % (node.left.type, node.op, node.right.type))
+
+        #print('visit_Binop', node, node.type)
 
     def visit_AssignmentStatement(self, node):
         # 1. Make sure the location of the assignment is defined
         # 2. Visit the expression on the right hand side
         # 3. Check that the types match
-        print("visit_assignmentStatement", node)
+        self.visit(node.location)
+        self.visit(node.value)
+
+        if not hasattr(node.location, 'type') or hasattr(node.value, 'type'):
+            error(node.lineno, "Assignment is not recognized as valid: {}".format(node))
+
+        #print("visit_assignmentStatement", node)
 
     def visit_ConstDeclaration(self, node):
         # 1. Check that the constant name is not already defined
         # 2. Add an entry to the symbol table
-        print("visit_constDeclaration", node)
+
         self.visit(node.expr)
         node.type = node.expr.typename
 
+        if self.global_symtab.is_symbol(node.name):
+            error(node.lineno, '{} is already defined'.format(node.name))
         self.global_symtab.add(node.name, node)
-        node.is_global = False if self.current_function else True
 
     def visit_VarDeclaration(self, node):
         # 1. Check that the variable name is not already defined
         # 2. Add an entry to the symbol table
         # 3. Check that the type of the expression (if any) is the same
         # 4. If there is no expression, set an initial value for the value
-        print('visit_VarDeclaration:', node)
 
-        if node.typename is None:
-            if node.expr:
-                self.visit(node.expr)
-        else:
-            try:
-                self.visit(node.typename)
+        node.type = node.typename
+        if node.expr:
 
-                node.type = node.typename.type
-                if node.expr:
-                    self.visit(node.expr)
-                    if node.expr.type and node.expr.type != node.type:
-                        error(node.lineno, 'Type error %s = %s' % (node.type, node.expr.type))
-                self.symtab_add(node.name, node)
-                node.is_global = False if self.current_function else True
-            except Exception as e:
-                print(e, node)
+            self.visit(node.expr)
+
+            if hasattr(node.expr, 'typename') and node.expr.typename is not None:
+                node.expr.type = node.expr.typename
+                if node.typename != node.expr.typename:
+                    error(node.lineno, 'Type error %s = %s' % (node.type, node.expr.type))
+
+        self.symtab_add(node.name, node)
+
+        # print('visit_VarDeclaration:', node.name, node.type)
 
     def visit_Typename(self, node):
         # 1. Make sure the typename is valid and that it's actually a type
         print('visit_Typename:', node)
-
+        print(node.typename)
 
     def visit_LoadVariable(self, node):
         # 1. Make sure the location is a valid variable or constant value
@@ -298,11 +318,25 @@ class CheckProgramVisitor(NodeVisitor):
 
     def visit_Literal(self, node):
         # 1. Attach an appropriate type to the literal
-        print('visit_Literal:', node)
 
-    def visit_PrintStatement(self, node):
-        print('visit_PrintStatement:', node)
+        node.type = node.typename
+
+
+    # def visit_PrintStatement(self, node):
+    #     # need to ensure that the expr to be printed is valid.
+    #     if node.expr is None:
+    #         pass
+    #     else:
+    #         if hasattr(node.expr, 'type') is False or node.expr.type is None:
+    #             error(node.lineno, "Printing an illegal expression: {}".format(node))
+    #
+    #     print('visit_PrintStatement:', node)
+
     # You will need to add more methods here in Projects 5-8.
+
+    def visit_ReadLocation(self, node):
+        if self.global_symtab.is_symbol(node.location.name):
+            node.type = self.global_symtab.get_type(node.location.name)
 
 # ----------------------------------------------------------------------
 #                       DO NOT MODIFY ANYTHING BELOW       
