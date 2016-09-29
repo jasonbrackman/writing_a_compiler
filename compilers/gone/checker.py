@@ -237,6 +237,7 @@ class CheckProgramVisitor(NodeVisitor):
         # Hint: Use the check_unaryop() function in typesys.py
         self.visit(node.right)
         node.type = check_unaryop(node.op, node.right.type)
+
         if node.type is None:
             error(node.lineno, 'Type error: %s %s' % (node.op, node.right.type))
 
@@ -300,7 +301,14 @@ class CheckProgramVisitor(NodeVisitor):
 
         self.symtab_add(node.name, node)
 
-        # print('visit_VarDeclaration:', node.name, node.type)
+        #print('visit_VarDeclaration:', node.name, node.type)
+
+    def visit_VarLocation(self, node):
+        if self.global_symtab.get_type(node.name):
+            node.type = self.global_symtab.get_type(node.name)
+        else:
+            node.type = None
+        #print('visit_VarLocation', node)
 
     def visit_Typename(self, node):
         # 1. Make sure the typename is valid and that it's actually a type
@@ -326,14 +334,42 @@ class CheckProgramVisitor(NodeVisitor):
 
         node.type = node.typename
 
-    # You will need to add more methods here in Projects 5-8.
-
     def visit_ReadLocation(self, node):
         if self.global_symtab.is_symbol(node.location.name):
             node.type = self.global_symtab.get_type(node.location.name)
         else:
             error(node.lineno, "ReadLocation error: {}".format(node))
 
+    def visit_FunctionCall(self, node):
+        func_type = self.global_symtab.get_type(node.name)
+
+        if func_type is None:
+            error(node.lineno, '{} is not defined.'.format(node.name))
+        else:
+            for argument in node.arguments:
+                self.visit(argument)
+            node.type = func_type
+
+        # print('visit_FunctionCall', node)
+
+    def visit_FunctionPrototype(self, node):
+        # 1. Make sure the function name is not already defined
+
+        if self.global_symtab.is_symbol(node.name):
+            error(node.lineno, '%r already defined.' % node.name)
+        else:
+            # 2. Visit the parameters to make sure they contain valid types
+            for parm in node.parameters:
+                parm.type = parm.typename
+
+            # 3. Make sure the function return type is a valid type
+            node.type = node.name
+
+            # 4. Place the function prototype in the symbol table
+            self.global_symtab.add(node.name, node)
+
+
+    # You will need to add more methods here in Projects 5-8.
 # ----------------------------------------------------------------------
 #                       DO NOT MODIFY ANYTHING BELOW       
 # ----------------------------------------------------------------------
@@ -353,7 +389,7 @@ def main():
     import sys
     from gone.parser import parse
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest4.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/jason_simple_compile_01.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.checker filename\n')

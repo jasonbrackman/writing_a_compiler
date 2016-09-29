@@ -201,24 +201,27 @@ from collections import defaultdict
 # the SSA code.   This is easy to do using dictionaries:
 
 binary_ops = {
-    '+' : 'add',
-    '-' : 'sub',
-    '*' : 'mul',
-    '/' : 'div',
+    '+': 'add',
+    '-': 'sub',
+    '*': 'mul',
+    '/': 'div',
 }
 
 unary_ops = {
-    '+' : 'uadd',
-    '-' : 'usub',
+    '+': 'uadd',
+    '-': 'usub',
 }
+
 
 # STEP 2: Implement the following Node Visitor class so that it creates
 # a sequence of SSA instructions in the form of tuples.  Use the
 # above description of the allowed op-codes as a guide.
 class GenerateCode(ast.NodeVisitor):
+    variables_in_use = dict()
     '''
     Node visitor class that creates 3-address encoded instruction sequences.
     '''
+
     def __init__(self):
         super(GenerateCode, self).__init__()
 
@@ -232,15 +235,15 @@ class GenerateCode(ast.NodeVisitor):
         self.externs = []
 
     def new_temp(self, typeobj):
-         '''
+        '''
          Create a new temporary variable of a given type.
          '''
-         typename = str(typeobj)
-         name = '__%s_%d' % (typename, self.versions[typename])
+        typename = str(typeobj)
+        name = '__%s_%d' % (typename, self.versions[typename])
 
-         self.versions[typename] += 1
+        self.versions[typename] += 1
 
-         return name
+        return name
 
     # You must implement visit_Nodename methods for all of the other
     # AST nodes.  In your code, you will need to make instructions
@@ -254,6 +257,7 @@ class GenerateCode(ast.NodeVisitor):
         inst = ('literal_' + str(node.type), node.value, target)
         self.code.append(inst)
         # Save the name of the temporary variable where the value was placed 
+
         node.gen_location = target
 
     def visit_BinOp(self, node):
@@ -264,16 +268,33 @@ class GenerateCode(ast.NodeVisitor):
         inst = (opcode, node.left.gen_location, node.right.gen_location, target)
         self.code.append(inst)
         node.gen_location = target
+        # print('visit_BinOp', node)
+
+    def visit_UnaryOp(self, node):
+        self.visit(node.right)
+
+        target = self.new_temp(node.type)
+        opcode = unary_ops[node.op] + '_' + str(node.right.type)
+        print(opcode, node.right.gen_location, target)
+        inst = (opcode, node.right.gen_location, target)
+        self.code.append(inst)
+
+        node.gen_location = target
+
+        # node.gen_location = node.right.gen_location
+        # print(node.right.gen_location)
+        # print('visit_UnaryOp')
 
     def visit_PrintStatement(self, node):
         self.visit(node.expr)
         inst = ('print_' + str(node.expr.type), node.expr.gen_location)
         self.code.append(inst)
+        # print('visit_PrintStatement', node)
 
-    def visit_AssignStatement(self, node):
-        print(node)
+    def visit_AssignmentStatement(self, node):
         # Visit the right hand side.  This evaluates the value
         # that's going to be stored.
+
         self.visit(node.value)
 
         # Attach the generated value as the 'gen_location' attribute
@@ -282,10 +303,52 @@ class GenerateCode(ast.NodeVisitor):
         node.location.gen_location = node.value.gen_location
         self.visit(node.location)
 
-    def visit_VarLocation(self, node):
-        print(node)
-        print("IRCODE visit_VarLocation")
+    def visit_VarDeclaration(self, node):
 
+        instr = ('alloc_{}'.format(node.type), node.name)
+        self.code.append(instr)
+
+        if node.expr:
+            self.visit(node.expr)
+            instr = ('store_{}'.format(node.type), node.expr.gen_location, node.name)
+            self.code.append(instr)
+
+    # Cheat to quickly get const working.
+    visit_ConstDeclaration = visit_VarDeclaration
+
+    def visit_VarLocation(self, node):
+        if node.usage == "load":
+            # make a temp
+            target = self.new_temp(node.type)
+            node.gen_location = target
+
+            instr = ('load_{}'.format(node.type), node.name, target)
+            self.code.append(instr)
+        else:
+            instr = ('store_{}'.format(node.type), node.gen_location, node.name)
+            self.code.append(instr)
+
+            # print("visit_VarLocation", node.__dict__)
+
+    def visit_FunctionCall(self, node):
+
+        # ('call_func', name, *args, target)  # Function call
+        for argument in node.arguments:
+            self.visit(argument)
+
+        target = self.new_temp(node.type)
+        node.gen_location = target
+
+        arguments_gen_locations = [a.gen_location for a in node.arguments]
+
+        instr = ('call_func', node.name, arguments_gen_locations, target)
+        self.code.append(instr)
+
+        # print('visit_FunctionCall', node)
+
+    def visit_ExternFunction(self, node):
+
+        print('visit_ExternFunctionDeclaration', node.__dict__)
 
 # Project 6 - Comparisons/Booleans
 # --------------------------------
@@ -329,9 +392,10 @@ def compile_ircode(source):
         gen.visit(ast)
 
         # !!!  This part will need to be changed slightly in Projects 7/8
-        return gen.code    
+        return gen.code
     else:
         return []
+
 
 def main():
     import sys
@@ -346,6 +410,7 @@ def main():
     # !!! This part will need to be changed slightly in Projects 7/8
     for instr in code:
         print(instr)
+
 
 if __name__ == '__main__':
     main()

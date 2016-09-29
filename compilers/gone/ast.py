@@ -128,11 +128,11 @@ class FunctionDeclaration(AST):
     _fields = ['prototype', 'statements']
 
 
-class ExternFunctionDeclaration(AST):
+class ExternFunction(AST):
     '''
     An external function declaration.   extern func foo(x int) int;
     '''
-    _fields = ['func_prototype']
+    _fields = ['prototype']
 
 
 class ParmDeclaration(AST):

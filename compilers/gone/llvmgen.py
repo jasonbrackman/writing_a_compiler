@@ -20,7 +20,7 @@ Further instructions are contained in the comments below.
 from llvmlite.ir import (
     Module, IRBuilder, Function, IntType, DoubleType, VoidType, Constant, GlobalVariable,
     FunctionType
-    )
+)
 
 # Declare the LLVM type objects that you want to use for the low-level
 # in our intermediate code.  Basically, you're going to need to
@@ -28,24 +28,25 @@ from llvmlite.ir import (
 # to the types being used the intermediate code being created by
 # the ircode.py file.
 
-int_type    = IntType(32)         # 32-bit integer
-float_type  = DoubleType()        # 64-bit float
-string_type = None                # Up to you (leave until the end)
+int_type = IntType(32)      # 32-bit integer
+float_type = DoubleType()   # 64-bit float
+string_type = None          # Up to you (leave until the end)
 
-void_type   = VoidType()          # Void type.  This is a special type
-                                  # used for internal functions returning
-                                  # no value
+void_type = VoidType()  # Void type.  This is a special type
+                        # used for internal functions returning
+                        # no value
 
 # A dictionary that maps the typenames used in IR to the corresponding
 # LLVM types defined above.   This is mainly provided for convenience
 # so you can quickly look up the type object given its type name.
 typemap = {
-    'int' : int_type,
-    'float' : float_type,
-    'string' : string_type,
+    'int': int_type,
+    'float': float_type,
+    'string': string_type,
 }
 
-# The following class is going to generate the LLVM instruction stream.  
+
+# The following class is going to generate the LLVM instruction stream.
 # The basic features of this class are going to mirror the experiments
 # you tried in Exercise 5.  The execution model is somewhat similar
 # to the visitor class.
@@ -118,7 +119,6 @@ class GenerateLLVM(object):
         # Initialize the runtime library functions (see below)
         self.declare_runtime_library()
 
-
     def declare_runtime_library(self):
         # Certain functions such as I/O and string handling are often easier
         # to implement in an external C library.  This method should make
@@ -127,7 +127,7 @@ class GenerateLLVM(object):
         # functions are implemented in C in a separate file gonert.c
 
         self.runtime = {}
-        
+
         # Declare printing functions
         self.runtime['_print_int'] = Function(self.module,
                                               FunctionType(void_type, [int_type]),
@@ -137,6 +137,10 @@ class GenerateLLVM(object):
                                                 FunctionType(void_type, [float_type]),
                                                 name="_print_float")
 
+        # self.runtime['_print_string'] = Function(self.module,
+        #                                          FunctionType(void_type, [string_type]),
+        #                                          name="_print_string")
+
     def generate_code(self, ircode):
         # Given a sequence of SSA intermediate code tuples, generate LLVM
         # instructions using the current builder (self.builder).  Each
@@ -144,10 +148,10 @@ class GenerateLLVM(object):
         # form self.emit_opcode(args)
 
         for opcode, *args in ircode:
-            if hasattr(self, 'emit_'+opcode):
-                getattr(self, 'emit_'+opcode)(*args)
+            if hasattr(self, 'emit_' + opcode):
+                getattr(self, 'emit_' + opcode)(*args)
             else:
-                print('Warning: No emit_'+opcode+'() method')
+                print('Warning: No emit_' + opcode + '() method')
 
         # Add a return statement.  Note, at this point, we don't really have
         # user-defined functions so this is a bit of hack--it may be removed later.
@@ -165,6 +169,13 @@ class GenerateLLVM(object):
     def emit_literal_float(self, value, target):
         self.temps[target] = Constant(float_type, value)
 
+    def emit_literal_string(self, value, target):
+        self.temps[target] = Constant(string_type, value)
+
+    # STRINGS BONUS: Nightmare scenarios :) --
+    # def emit_literal_string(self, value, target):
+    #     self.temps[target] = Constant(string_type, value)
+
     # Allocation of variables.  Declare as global variables and set to
     # a sensible initial value.
     def emit_alloc_int(self, name):
@@ -177,6 +188,11 @@ class GenerateLLVM(object):
         var.initializer = Constant(float_type, 0)
         self.vars[name] = var
 
+    def emit_alloc_string(self, name):
+        var = GlobalVariable(self.module, string_type, name=name)
+        var.initializer = Constant(string_type, 0)
+        self.vars[name] = var
+
     # Load/store instructions for variables.  Load needs to pull a
     # value from a global variable and store in a temporary. Store
     # goes in the opposite direction.
@@ -184,13 +200,19 @@ class GenerateLLVM(object):
         self.temps[target] = self.builder.load(self.vars[name], target)
 
     def emit_load_float(self, name, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.load(self.vars[name], target)
+
+    def emit_load_string(self, name, target):
+        self.temps[target] = self.builder.load(self.vars[name], target)
 
     def emit_store_int(self, source, target):
         self.builder.store(self.temps[source], self.vars[target])
 
     def emit_store_float(self, source, target):
-        pass                 # You must implement
+        self.builder.store(self.temps[source], self.vars[target])
+
+    def emit_store_string(self, source, target):
+        self.builder.store(self.temps[source], self.vars[target])
 
     # Binary + operator
     def emit_add_int(self, left, right, target):
@@ -201,12 +223,13 @@ class GenerateLLVM(object):
 
     # Binary - operator
     def emit_sub_int(self, left, right, target):
-        self.temps[target] = self.builder.sub(self.temps[left], self.temps[right], target)                 # You must implement
+        self.temps[target] = self.builder.sub(self.temps[left], self.temps[right], target)  # You must implement
 
     def emit_sub_float(self, left, right, target):
         self.temps[target] = self.builder.fsub(self.temps[left], self.temps[right], target)
 
         # Binary * operator
+
     def emit_mul_int(self, left, right, target):
         self.temps[target] = self.builder.mul(self.temps[left], self.temps[right], target)
 
@@ -215,35 +238,45 @@ class GenerateLLVM(object):
 
     # Binary / operator
     def emit_div_int(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.sdiv(self.temps[left], self.temps[right], target)
 
     def emit_div_float(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fdiv(self.temps[left], self.temps[right], target)
 
     # Unary + operator
     def emit_uadd_int(self, source, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.add(Constant(int_type, 0),
+                                              self.temps[source],
+                                              target)
 
     def emit_uadd_float(self, source, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fadd(Constant(float_type, 0),
+                                               self.temps[source],
+                                               target)
 
     # Unary - operator
     def emit_usub_int(self, source, target):
-        pass                 # You must implement
-        self.temps[target] = self.builder.sub(
-            Constant(int_type, 0),
-            self.temps[source],
-            target)
+        self.temps[target] = self.builder.sub(Constant(int_type, 0),
+                                              self.temps[source],
+                                              target)
 
     def emit_usub_float(self, source, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fsub(Constant(float_type, 0),
+                                               self.temps[source],
+                                               target)
 
     # Print statements
     def emit_print_int(self, source):
         self.builder.call(self.runtime['_print_int'], [self.temps[source]])
 
     def emit_print_float(self, source):
-        self.builder.call(self.runtime['_print_float'], [self.temps[source]])
+        try:
+            self.builder.call(self.runtime['_print_float'], [self.temps[source]])
+        except KeyError as e:
+            print("Failed to print a float: {}".format(e))
+
+    # def emit_print_string(self, source):
+    #     self.builder.call(self.runtime['_print_string'], [self.temps[source]])
 
     # Extern function declaration.  
     def emit_extern_func(self, name, rettypename, *parmtypenames):
@@ -254,7 +287,8 @@ class GenerateLLVM(object):
 
     # Call an external function.
     def emit_call_func(self, funcname, *args):
-        pass                 # You must implement
+        pass  # You must implement
+
 
 #######################################################################
 #                      TESTING/MAIN PROGRAM
@@ -276,6 +310,7 @@ def compile_llvm(source):
 
     return str(generator.module)
 
+
 def main():
     import sys
 
@@ -287,6 +322,6 @@ def main():
     llvm_code = compile_llvm(source)
     print(llvm_code)
 
+
 if __name__ == '__main__':
     main()
-

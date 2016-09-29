@@ -1,3 +1,8 @@
+A good primer for this course is found in the following:
+    Python Cookbook
+    9.24. Parsing & Analyzing Python Source
+    9.25. Disassembling Python Byte Code
+
 Git Examples:
     git status
     git diff gone
@@ -5,6 +10,10 @@ Git Examples:
 
 PIP:
     pip install sly
+
+bash:
+    pwd (for directory where am I)
+
 
 LLVM Compile:
     0. Create _llvm.py and main.c
@@ -17,9 +26,40 @@ Process:
     1. parser
     2. checker
     3. ircode
+        * can run this independantly to see what IRCODE is generated:
+            python3 -m gone.ircode Tests/good_partial.g
     4. llvm
 
+How python works:
 
-Control flow:
-- Need to a have a graph
-- Will require keeping track of branches.
+    # sample.py
+    def countdown(n):
+        while n > 0:
+            print("T-minus", n)
+            n -= 1
+
+    countdown(10)
+
+    1. create code as c
+    2. c.__code__
+    3. c.co_code (this is wht is executing
+
+    a. you can then:
+      - import dis
+      - dis.dis(c)
+      - dis.dis(c.__code__)
+
+Problems using run (worked then it didn't?):
+    1. drop to terminal
+    2. start bash
+    3. go to the 'gone' dir.
+    4. run the make file by typing make -- and it should generate the following:
+        gcc -bundle -undefined dynamic_lookup gonert.c -o gonert.so
+
+LLVM Documentation:
+    http://llvm.org/releases/2.5/docs/LangRef.html
+
+Code related:
+    Control flow (with regards to if blocks):
+        - Need to a have a graph
+        - Will require keeping track of branches.

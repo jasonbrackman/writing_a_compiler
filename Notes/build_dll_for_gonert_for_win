@@ -1,0 +1,8 @@
+[5:50 PM] Peter Crosbie: Here is how you can build gonert.dll from gonert.c using cl.exe from the command line in powershell or cmd.
+[5:52 PM] Peter Crosbie: Prerequisite: cl.exe on path configured for x64, run "vcvarsall.bat x64". You should get the following if you run cl.exe:
+[5:52 PM] Peter Crosbie: Check compiler OK
+Microsoft (R) C/C++ Optimizing Compiler Version 19.00.23506 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.usage: cl [ option... ] filename... [ /link linkoption... ]
+[5:53 PM] Peter Crosbie: To build the dll directly, no byzantine vs project file required:
+[5:53 PM] Peter Crosbie: cl /LD gonert.c /link /out:gonert.dll
+[5:54 PM] Peter Crosbie: $ cl /LD gonert.c /link /out:gonert.dll

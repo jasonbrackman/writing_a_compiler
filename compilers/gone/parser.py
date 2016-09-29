@@ -152,6 +152,7 @@ class GoneParser(Parser):
     def program(self, p):
         return Program([])  # start with an empty list
 
+
     @_('statements statement')
     def statements(self, p):
         p.statements.append(p.statement)
@@ -167,6 +168,7 @@ class GoneParser(Parser):
 
     @_('CONST ID ASSIGN expression SEMI')
     def statement(self, p):
+        """const x = 1.0;"""
         return ConstDeclaration(p.ID, p.expression, lineno=p.lineno)
 
     @_('VAR ID datatype ASSIGN expression SEMI')
@@ -176,27 +178,28 @@ class GoneParser(Parser):
 
     @_('location ASSIGN expression SEMI')
     def statement(self, p):
+        p.location.usage = "store"
         return AssignmentStatement(p.location, p.expression, lineno=p.lineno)
 
-    @_('EXTERN func_prototype SEMI')
+    @_('EXTERN prototype SEMI')
     def statement(self, p):
-        return ExternFunctionDeclaration(p.func_prototype, lineno=p.lineno)
+        return ExternFunction(p.prototype, lineno=p.lineno)
 
     @_('VAR ID datatype SEMI')
     def statement(self, p):
         """var x int;"""
         return VarDeclaration(p.ID, p.datatype, None, lineno=p.lineno)
 
-    # @_('func_prototype LBRACE basicblock RBRACE')
+    # @_('prototype LBRACE basicblock RBRACE')
     # def func_declaration(self, p):
-    #     return FunctionDeclaration(p.func_prototype, p.basicblock, lineno=p.lineno)
+    #     return FunctionDeclaration(p.prototype, p.basicblock, lineno=p.lineno)
 
     @_('FUNC ID LPAREN parameters RPAREN datatype')
-    def func_prototype(self, p):
+    def prototype(self, p):
         return FunctionPrototype(p.ID, p.parameters, p.datatype, lineno=p.lineno)
 
     @_('FUNC ID LPAREN RPAREN datatype')
-    def func_prototype(self, p):
+    def prototype(self, p):
         return FunctionPrototype(p.ID, [], p.datatype, lineno=p.lineno)
 
     @_('parameters COMMA parm_declaration')
@@ -212,10 +215,6 @@ class GoneParser(Parser):
     def parm_declaration(self, p):
         return ParmDeclaration(p.ID, p.datatype, lineno=p.lineno)
 
-    @_('ID LPAREN RPAREN')
-    def expression(self, p):
-        return FunctionCall(p.ID, None)
-
     @_('arguments COMMA expression')
     def arguments(self, p):
         p.arguments.append(p.expression)
@@ -225,25 +224,13 @@ class GoneParser(Parser):
     def arguments(self, p):
         return [p.expression]
 
-    @_('ID')
-    def datatype(self, p):
-        return p.ID
-
-    @_('INTEGER')
-    def literal(self, p):
-        return Literal(p.INTEGER, 'int', lineno=p.lineno)
-
-    @_('FLOAT')
-    def literal(self, p):
-        return Literal(p.FLOAT, 'float', lineno=p.lineno)
-
-    @_('STRING')
-    def literal(self, p):
-        return Literal(p.STRING, 'string', lineno=p.lineno)
-
     @_('ID LPAREN arguments RPAREN')
     def expression(self, p):
-        return FunctionCall(p.ID, p.arguments)
+        return FunctionCall(p.ID, p.arguments, lineno=p.lineno)
+
+    @_('ID LPAREN RPAREN')
+    def expression(self, p):
+        return FunctionCall(p.ID, [], lineno=p.lineno)
 
     @_('expression PLUS expression',
        'expression MINUS expression',
@@ -269,11 +256,28 @@ class GoneParser(Parser):
 
     @_('location')
     def expression(self, p):
+        p.location.usage = "load"
         return p.location
+
+    @_('INTEGER')
+    def literal(self, p):
+        return Literal(p.INTEGER, 'int', lineno=p.lineno)
+
+    @_('FLOAT')
+    def literal(self, p):
+        return Literal(p.FLOAT, 'float', lineno=p.lineno)
+
+    @_('STRING')
+    def literal(self, p):
+        return Literal(p.STRING, 'string', lineno=p.lineno)
 
     @_('ID')
     def location(self, p):
         return VarLocation(p.ID, lineno=p.lineno)
+
+    @_('ID')
+    def datatype(self, p):
+        return p.ID
 
     # ----------------------------------------------------------------------
     # DO NOT MODIFY
@@ -309,7 +313,7 @@ def main():
 
     import sys
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/jason_simple_compile_01.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')

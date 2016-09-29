@@ -32,7 +32,8 @@ def main():
             f.write(llvm_code.encode('utf-8'))
             f.flush()
             # Use this for Projects 5-7
-            subprocess.check_output(['clang',  f.name, _rtlib])
+            #subprocess.check_output(['clang',  f.name, _rtlib, "-lm"])
+            subprocess.check_output(['clang', f.name, _rtlib])
 
             # Use this version when you get to Project 8
             # subprocess.check_output(['clang', '-DNEED_MAIN', f.name, _rtlib])
