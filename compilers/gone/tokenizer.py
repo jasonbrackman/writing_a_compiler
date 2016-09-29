@@ -297,7 +297,7 @@ def main():
     '''
     import sys
 
-    #sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
+    # sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest5.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.tokenizer filename\n")

@@ -265,21 +265,22 @@ class CheckProgramVisitor(NodeVisitor):
         self.visit(node.location)
         self.visit(node.value)
 
-        if not hasattr(node.location, 'type') or hasattr(node.value, 'type'):
+        if not hasattr(node.location, 'type') or not hasattr(node.value, 'type'):
             error(node.lineno, "Assignment is not recognized as valid: {}".format(node))
 
-        #print("visit_assignmentStatement", node)
+        # print("visit_assignmentStatement", node)
 
     def visit_ConstDeclaration(self, node):
         # 1. Check that the constant name is not already defined
         # 2. Add an entry to the symbol table
-
         self.visit(node.expr)
-        node.type = node.expr.typename
+        node.type = node.expr.type
 
         if self.global_symtab.is_symbol(node.name):
             error(node.lineno, '{} is already defined'.format(node.name))
         self.global_symtab.add(node.name, node)
+
+        #print('visit_ConstDeclaration')
 
     def visit_VarDeclaration(self, node):
         # 1. Check that the variable name is not already defined
@@ -314,29 +315,24 @@ class CheckProgramVisitor(NodeVisitor):
     def visit_StoreVariable(self, node):
         # 1. Make sure the location can be assigned
         # 2. Assign the appropriate type
-        print('visit_StoreVariable:', node)
+        if self.global_symtab.is_symbol(node.name):
+            node.type = self.global_symtab.get_type(node.name)
+        else:
+            error(node.lineno, "Requested storage of variable does not exist: {}".format(node.name))
+        # print('visit_StoreVariable:', node)
 
     def visit_Literal(self, node):
         # 1. Attach an appropriate type to the literal
 
         node.type = node.typename
 
-
-    # def visit_PrintStatement(self, node):
-    #     # need to ensure that the expr to be printed is valid.
-    #     if node.expr is None:
-    #         pass
-    #     else:
-    #         if hasattr(node.expr, 'type') is False or node.expr.type is None:
-    #             error(node.lineno, "Printing an illegal expression: {}".format(node))
-    #
-    #     print('visit_PrintStatement:', node)
-
     # You will need to add more methods here in Projects 5-8.
 
     def visit_ReadLocation(self, node):
         if self.global_symtab.is_symbol(node.location.name):
             node.type = self.global_symtab.get_type(node.location.name)
+        else:
+            error(node.lineno, "ReadLocation error: {}".format(node))
 
 # ----------------------------------------------------------------------
 #                       DO NOT MODIFY ANYTHING BELOW       
@@ -348,7 +344,7 @@ def check_program(ast):
     '''
     checker = CheckProgramVisitor()
     checker.visit(ast)
-    #checker.global_symtab.print()
+    # checker.global_symtab.print()
 
 def main():
     '''
@@ -357,7 +353,7 @@ def main():
     import sys
     from gone.parser import parse
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/good.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest4.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.checker filename\n')

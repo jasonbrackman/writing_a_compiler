@@ -11,3 +11,15 @@ LLVM Compile:
     1. python3 _llvm.py > output.ll
     2. clang  main.c output.ll
     3. ./a.out (to run)
+
+Process:
+    0. tokenizer
+    1. parser
+    2. checker
+    3. ircode
+    4. llvm
+
+
+Control flow:
+- Need to a have a graph
+- Will require keeping track of branches.

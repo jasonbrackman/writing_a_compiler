@@ -42,9 +42,11 @@ def run(llvm_ir):
     # that executes the Gone main() function.
 
 def main():
-    from .errors import errors_reported
-    from .llvmgen import compile_llvm
+    from gone.errors import errors_reported
+    from gone.llvmgen import compile_llvm
     import sys
+    sys.argv = ['',
+                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/jason_simple_compile_01.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.run filename\n")

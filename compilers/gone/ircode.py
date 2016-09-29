@@ -237,7 +237,9 @@ class GenerateCode(ast.NodeVisitor):
          '''
          typename = str(typeobj)
          name = '__%s_%d' % (typename, self.versions[typename])
+
          self.versions[typename] += 1
+
          return name
 
     # You must implement visit_Nodename methods for all of the other
@@ -254,7 +256,7 @@ class GenerateCode(ast.NodeVisitor):
         # Save the name of the temporary variable where the value was placed 
         node.gen_location = target
 
-    def visit_Binop(self, node):
+    def visit_BinOp(self, node):
         self.visit(node.left)
         self.visit(node.right)
         target = self.new_temp(node.type)
@@ -265,8 +267,25 @@ class GenerateCode(ast.NodeVisitor):
 
     def visit_PrintStatement(self, node):
         self.visit(node.expr)
-        inst = ('print_' + str(node.expr.type) ,node.expr.gen_location)
+        inst = ('print_' + str(node.expr.type), node.expr.gen_location)
         self.code.append(inst)
+
+    def visit_AssignStatement(self, node):
+        print(node)
+        # Visit the right hand side.  This evaluates the value
+        # that's going to be stored.
+        self.visit(node.value)
+
+        # Attach the generated value as the 'gen_location' attribute
+        # of the location.   Then visit the location.  See the
+        # note in visit_VarLocation().
+        node.location.gen_location = node.value.gen_location
+        self.visit(node.location)
+
+    def visit_VarLocation(self, node):
+        print(node)
+        print("IRCODE visit_VarLocation")
+
 
 # Project 6 - Comparisons/Booleans
 # --------------------------------

@@ -144,17 +144,13 @@ class GoneParser(Parser):
     #
     # Afterwards, add features by looking at the code in Tests/parsetest1-7.g
 
-    @_('basicblock')
-    def program(self, p):
-        return Program(p.basicblock)
-
     @_('statements')
-    def basicblock(self, p):
-        return p.statements
+    def program(self, p):
+        return Program(p.statements)
 
-    @_('empty')
-    def basicblock(self, p):
-        return None
+    @_('')
+    def program(self, p):
+        return Program([])  # start with an empty list
 
     @_('statements statement')
     def statements(self, p):
@@ -163,28 +159,37 @@ class GoneParser(Parser):
 
     @_('statement')
     def statements(self, p):
-        return Statements([p.statement])
+        return [p.statement]
 
-    @_('const_declaration',
-       'var_declaration',
-       'print_statement',
-       'extern_declaration',
-       'assign_statement',
-       'func_declaration')
+    @_('PRINT expression SEMI')
     def statement(self, p):
-        return p[0]
+        return PrintStatement(p.expression, lineno=p.lineno)
 
-    @_('func_prototype LBRACE basicblock RBRACE')
-    def func_declaration(self, p):
-        return FunctionDeclaration(p.func_prototype, p.basicblock, lineno=p.lineno)
+    @_('CONST ID ASSIGN expression SEMI')
+    def statement(self, p):
+        return ConstDeclaration(p.ID, p.expression, lineno=p.lineno)
 
-    @_('ID LPAREN arguments RPAREN')
-    def expression(self, p):
-        return FunctionCall(p.ID, p.arguments)
+    @_('VAR ID datatype ASSIGN expression SEMI')
+    def statement(self, p):
+        """ var x float = 2;"""
+        return VarDeclaration(p.ID, p.datatype, p.expression, lineno=p.lineno)
+
+    @_('location ASSIGN expression SEMI')
+    def statement(self, p):
+        return AssignmentStatement(p.location, p.expression, lineno=p.lineno)
 
     @_('EXTERN func_prototype SEMI')
-    def extern_declaration(self, p):
+    def statement(self, p):
         return ExternFunctionDeclaration(p.func_prototype, lineno=p.lineno)
+
+    @_('VAR ID datatype SEMI')
+    def statement(self, p):
+        """var x int;"""
+        return VarDeclaration(p.ID, p.datatype, None, lineno=p.lineno)
+
+    # @_('func_prototype LBRACE basicblock RBRACE')
+    # def func_declaration(self, p):
+    #     return FunctionDeclaration(p.func_prototype, p.basicblock, lineno=p.lineno)
 
     @_('FUNC ID LPAREN parameters RPAREN datatype')
     def func_prototype(self, p):
@@ -220,55 +225,9 @@ class GoneParser(Parser):
     def arguments(self, p):
         return [p.expression]
 
-    @_('PRINT expression SEMI')
-    def print_statement(self, p):
-        return PrintStatement(p.expression, lineno=p.lineno)
-
-    @_('CONST ID ASSIGN expression SEMI')
-    def const_declaration(self, p):
-        return ConstDeclaration(p.ID, p.expression, lineno=p.lineno)
-
-    @_('location')
-    def expression(self, p):
-        return ReadLocation(p.location)
-
-    @_('VAR ID datatype SEMI')
-    def var_declaration(self, p):
-        """
-            var x int;
-        """
-        return VarDeclaration(p.ID, p.datatype, None, lineno=p.lineno)
-
-    @_('VAR ID datatype ASSIGN expression SEMI')
-    def var_declaration(self, p):
-        """
-            var x float = 2;
-        """
-        return VarDeclaration(p.ID, p.datatype, p.expression, lineno=p.lineno)
-
-    @_('store_location ASSIGN expression SEMI')
-    def assign_statement(self, p):
-        return AssignmentStatement(p.store_location, p.expression, lineno=p.lineno)
-
-    @_('ID')
-    def store_location(self, p):
-        return StoreVariable(p.ID, lineno=p.lineno)
-
-    # @_('ID LBRACKET expression RBRACKET')
-    # def store_location(self, p):
-    #     return StoreArray(p.ID, p.expression, lineno=p.lineno)
-
     @_('ID')
     def datatype(self, p):
         return p.ID
-
-    @_('ID')
-    def location(self, p):
-        return VarLocation(p.ID)
-
-    @_('literal')
-    def expression(self, p):
-        return p.literal
 
     @_('INTEGER')
     def literal(self, p):
@@ -281,6 +240,10 @@ class GoneParser(Parser):
     @_('STRING')
     def literal(self, p):
         return Literal(p.STRING, 'string', lineno=p.lineno)
+
+    @_('ID LPAREN arguments RPAREN')
+    def expression(self, p):
+        return FunctionCall(p.ID, p.arguments)
 
     @_('expression PLUS expression',
        'expression MINUS expression',
@@ -300,9 +263,17 @@ class GoneParser(Parser):
     def expression(self, p):
         return p.expression
 
-    @_('')
-    def empty(self, p):
-        return None
+    @_('literal')
+    def expression(self, p):
+        return p.literal
+
+    @_('location')
+    def expression(self, p):
+        return p.location
+
+    @_('ID')
+    def location(self, p):
+        return VarLocation(p.ID, lineno=p.lineno)
 
     # ----------------------------------------------------------------------
     # DO NOT MODIFY
@@ -338,7 +309,7 @@ def main():
 
     import sys
 
-    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest6.g']
+    sys.argv = ['', r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/parsetest3.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write('Usage: python3 -m gone.parser filename\n')

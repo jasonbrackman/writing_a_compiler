@@ -1,5 +1,5 @@
 # gone/llvmgen.py
-'''
+"""
 Project 5 : Generate LLVM
 =========================
 In this project, you're going to translate the SSA intermediate code
@@ -13,7 +13,7 @@ work before we implement further support for user-defined functions in
 Project 8.
 
 Further instructions are contained in the comments below.
-'''
+"""
 
 # LLVM imports. Don't change this.
 
@@ -163,8 +163,8 @@ class GenerateLLVM(object):
         self.temps[target] = Constant(int_type, value)
 
     def emit_literal_float(self, value, target):
-        pass                # You must implement
-    
+        self.temps[target] = Constant(float_type, value)
+
     # Allocation of variables.  Declare as global variables and set to
     # a sensible initial value.
     def emit_alloc_int(self, name):
@@ -173,8 +173,9 @@ class GenerateLLVM(object):
         self.vars[name] = var
 
     def emit_alloc_float(self, name):
-        pass                # You must implement
-
+        var = GlobalVariable(self.module, float_type, name=name)
+        var.initializer = Constant(float_type, 0)
+        self.vars[name] = var
 
     # Load/store instructions for variables.  Load needs to pull a
     # value from a global variable and store in a temporary. Store
@@ -191,27 +192,26 @@ class GenerateLLVM(object):
     def emit_store_float(self, source, target):
         pass                 # You must implement
 
-
     # Binary + operator
     def emit_add_int(self, left, right, target):
         self.temps[target] = self.builder.add(self.temps[left], self.temps[right], target)
 
     def emit_add_float(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fadd(self.temps[left], self.temps[right], target)
 
     # Binary - operator
     def emit_sub_int(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.sub(self.temps[left], self.temps[right], target)                 # You must implement
 
     def emit_sub_float(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fsub(self.temps[left], self.temps[right], target)
 
-    # Binary * operator
+        # Binary * operator
     def emit_mul_int(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.mul(self.temps[left], self.temps[right], target)
 
     def emit_mul_float(self, left, right, target):
-        pass                 # You must implement
+        self.temps[target] = self.builder.fmul(self.temps[left], self.temps[right], target)
 
     # Binary / operator
     def emit_div_int(self, left, right, target):
@@ -243,7 +243,7 @@ class GenerateLLVM(object):
         self.builder.call(self.runtime['_print_int'], [self.temps[source]])
 
     def emit_print_float(self, source):
-        pass                 # You must implement
+        self.builder.call(self.runtime['_print_float'], [self.temps[source]])
 
     # Extern function declaration.  
     def emit_extern_func(self, name, rettypename, *parmtypenames):
@@ -290,8 +290,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-
-        
-        
-        
