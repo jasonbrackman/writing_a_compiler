@@ -350,7 +350,7 @@ class CheckProgramVisitor(NodeVisitor):
                 self.visit(argument)
             node.type = func_type
 
-        print('visit_FunctionCall', node, node.type)
+        # print('visit_FunctionCall', node, node.type)
 
     def visit_FunctionPrototype(self, node):
         # 1. Make sure the function name is not already defined
@@ -369,7 +369,7 @@ class CheckProgramVisitor(NodeVisitor):
             self.global_symtab.add(node.name, node)
 
     def visit_ExternFunction(self, node):
-        print('checker_visit_ExternDeclaration', node)
+        # print('checker_visit_ExternDeclaration', node)
 
         self.visit(node.prototype)
         # 1. Visit the external prototype to add a type

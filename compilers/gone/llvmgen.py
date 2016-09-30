@@ -363,7 +363,7 @@ class GenerateLLVM(object):
 
     # Extern function declaration.  
     def emit_extern_func(self, name, return_type, parameter_names):
-        print("emit_extern_func: ", name, return_type, parameter_names)
+        #print("emit_extern_func: ", name, return_type, parameter_names)
         rettype = typemap[return_type]
         parmtypes = [typemap[pname] for pname in parameter_names]
         func_type = FunctionType(rettype, parmtypes)
@@ -372,10 +372,10 @@ class GenerateLLVM(object):
     # Call an external function.
     def emit_call_func(self, name, args, target):
 
-        print("NOT IMPLEMENTED: emit_call_func: ", name, *args)
+        #print("NOT IMPLEMENTED: emit_call_func: ", name, *args)
         func = self.vars[name]
         argvals = [self.temps[name] for name in args]
-        print('{}'.format(self.temps))
+        #print('{}'.format(self.temps))
         self.temps[target] = self.builder.call(func, argvals)
 
 

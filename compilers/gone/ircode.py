@@ -371,10 +371,10 @@ class GenerateCode(ast.NodeVisitor):
                  node.prototype.typename,
                  [parm.typename for parm in node.prototype.parameters])
         self.code.append(instr)
-        print('visit_ExternFunctionDeclaration', node.__dict__)
+        # print('visit_ExternFunctionDeclaration', node.__dict__)
 
     def visit_IfElseStatement(self, node):
-        print('visit_IfStatement', node)
+        # print('visit_IfStatement', node)
         # Make block labels for the merge, if, and else branches.
         # Do this in advance!
         merge_block = self.new_block()

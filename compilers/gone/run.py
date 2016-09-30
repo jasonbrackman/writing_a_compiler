@@ -41,12 +41,37 @@ def run(llvm_ir):
     # function that initializes global variables.  Then add code below
     # that executes the Gone main() function.
 
+def tests():
+    from gone.errors import errors_reported
+    from gone.llvmgen import compile_llvm
+    import os
+    import sys
+    root = r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests'
+    files = [os.path.join(root, file) for file in os.listdir(root) if file.endswith('.g')]
+    for file in files:
+        try:
+            sys.argv = ['', file]
+
+            if len(sys.argv) != 2:
+                sys.stderr.write("Usage: python3 -m gone.run filename\n")
+                raise SystemExit(1)
+
+            source = open(sys.argv[1]).read()
+            llvm_code = compile_llvm(source)
+            if not errors_reported():
+                run(llvm_code)
+
+            print("Testing: {}".format(file))
+        except Exception as e:
+            print("Testing Failed: {}".format(file))
+
 def main():
     from gone.errors import errors_reported
     from gone.llvmgen import compile_llvm
+
     import sys
     sys.argv = ['',
-                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/mandel_simple.g']
+                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/letters.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.run filename\n")
@@ -59,3 +84,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    #tests()
