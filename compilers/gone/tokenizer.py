@@ -181,8 +181,6 @@ class GoneLexer(Lexer):
     LPAREN    = r'\('
     RPAREN    = r'\)'
     COMMA     = r','
-    LBRACKET  = r'\['
-    RBRACKET  = r'\]'
     LE        = r'<='
     GE        = r'>='
     EQ        = r'=='
@@ -193,6 +191,10 @@ class GoneLexer(Lexer):
     LOR       = r'\|\|'
     LNOT      = r'!'
     ASSIGN    = r'='
+    LBRACE    = r'\{'
+    RBRACE    = r'\}'
+    LBRACKET  = r'\['
+    RBRACKET  = r'\]'
 
     # ----------------------------------------------------------------------
     # *** YOU MUST COMPLETE : write the regexs and additional code below ***

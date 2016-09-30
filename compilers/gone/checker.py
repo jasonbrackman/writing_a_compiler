@@ -350,7 +350,7 @@ class CheckProgramVisitor(NodeVisitor):
                 self.visit(argument)
             node.type = func_type
 
-        # print('visit_FunctionCall', node)
+        print('visit_FunctionCall', node, node.type)
 
     def visit_FunctionPrototype(self, node):
         # 1. Make sure the function name is not already defined
@@ -363,10 +363,22 @@ class CheckProgramVisitor(NodeVisitor):
                 parm.type = parm.typename
 
             # 3. Make sure the function return type is a valid type
-            node.type = node.name
+            node.type = node.typename
 
             # 4. Place the function prototype in the symbol table
             self.global_symtab.add(node.name, node)
+
+    def visit_ExternFunction(self, node):
+        print('checker_visit_ExternDeclaration', node)
+
+        self.visit(node.prototype)
+        # 1. Visit the external prototype to add a type
+
+        # if self.global_symtab.is_symbol(node.prototype.name):
+        #     error(node.lineno, '%r already defined.' % node.name)
+        # else:
+        #     node.type = node.prototype.typename
+        #     self.global_symtab.add(node.prototype.name, node)
 
 
     # You will need to add more methods here in Projects 5-8.

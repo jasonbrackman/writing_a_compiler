@@ -26,7 +26,8 @@ Process:
     1. parser
         - relies on ast.py
     2. checker
-    3. ircode
+    3. ircode (intermediate responsibility)
+        - KeyErrors often come from here...
         - relies on llvmgen.py
         * can run this independantly to see what IRCODE is generated:
             python3 -m gone.ircode Tests/good_partial.g
@@ -68,4 +69,6 @@ Code related:
 
 Extras:
     - 'str has not attribute type' error means you've passed llvm a string, not the object from self.temps[] -- fyi.
-    - Keyerror in ircode often  means that the 'binary_ops dict' is missing a component.
+    - Keyerror often occurs in ircode.py -- look there first:
+        --> check if 'binary_ops dict' is missing a component.
+        --> read carefully -- self.temps[source] for example is an array that might not have been populated

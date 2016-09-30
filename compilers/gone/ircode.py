@@ -243,6 +243,9 @@ class GenerateCode(ast.NodeVisitor):
         # A list of external declarations (and types)
         self.externs = []
 
+        # provides a unique var that increments each time a new block is provided.
+        self._blocknum = 0
+
     def new_temp(self, typeobj):
         '''
          Create a new temporary variable of a given type.
@@ -253,6 +256,10 @@ class GenerateCode(ast.NodeVisitor):
         self.versions[typename] += 1
 
         return name
+
+    def new_block(self):
+        self._blocknum += 1
+        return '.L%d' % self._blocknum
 
     # You must implement visit_Nodename methods for all of the other
     # AST nodes.  In your code, you will need to make instructions
@@ -284,7 +291,7 @@ class GenerateCode(ast.NodeVisitor):
 
         target = self.new_temp(node.type)
         opcode = unary_ops[node.op] + '_' + str(node.right.type)
-        print(opcode, node.right.gen_location, target)
+        # print(opcode, node.right.gen_location, target)
         inst = (opcode, node.right.gen_location, target)
         self.code.append(inst)
 
@@ -355,9 +362,71 @@ class GenerateCode(ast.NodeVisitor):
 
         # print('visit_FunctionCall', node)
 
-    def visit_ExternFunction(self, node):
+    def visit_FunctionPrototype(self, node):
+        print('visit_FunctionDeclaration', node)
 
+    def visit_ExternFunction(self, node):
+        instr = ('extern_func',
+                 node.prototype.name,
+                 node.prototype.typename,
+                 [parm.typename for parm in node.prototype.parameters])
+        self.code.append(instr)
         print('visit_ExternFunctionDeclaration', node.__dict__)
+
+    def visit_IfElseStatement(self, node):
+        print('visit_IfStatement', node)
+        # Make block labels for the merge, if, and else branches.
+        # Do this in advance!
+        merge_block = self.new_block()
+        if_block = self.new_block()
+        else_block = self.new_block() if node.else_statements else merge_block
+
+        # Visit the expression for the test (if (expr) { ... )
+        self.visit(node.condition)
+        # print("RM", node.__dict__)
+
+        # Conditionally branch based on result
+        self.code.append(('cbranch', node.condition.gen_location, if_block, else_block))
+
+        # Visit the if-branch
+        self.code.append(('block', if_block))
+        self.visit(node.if_statements)
+        self.code.append(('branch', merge_block))
+
+        # Visit the else-branch (if any)
+        if node.else_statements:
+            self.code.append(('block', else_block))
+            self.visit(node.else_statements)
+            self.code.append(('branch', merge_block))
+
+        # Emit the merge block label
+        self.code.append(('block', merge_block))
+
+    def visit_WhileStatement(self, node):
+        # Make the labels for the different parts of the loop
+        test_label = self.new_block()
+        exit_label = self.new_block()
+        body_label = self.new_block()
+
+        # Tricky: Branch to the start of the test block
+        self.code.append(('branch', test_label))
+
+        # Evaluate the loop test
+        self.code.append(('block', test_label))
+        self.visit(node.condition)
+        # print('visit_WhileStatement', node)
+        # Branch into the loop body or exit on result
+        self.code.append(('cbranch', node.condition.gen_location, body_label, exit_label))
+
+        # Loop body
+        self.code.append(('block', body_label))
+        self.visit(node.statements)
+
+        # Go back and re-evaluate the test
+        self.code.append(('branch', test_label))
+
+        # Loop exit
+        self.code.append(('block', exit_label))
 
 # Project 6 - Comparisons/Booleans
 # --------------------------------

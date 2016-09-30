@@ -195,7 +195,7 @@ class GoneParser(Parser):
 
     @_('WHILE expression LBRACE program RBRACE')
     def statement(self, p):
-        return WhileStatement(p.expression, p.block, lineno=p.lineno)
+        return WhileStatement(p.expression, p.program, lineno=p.lineno)
 
     @_('IF expression LBRACE program RBRACE')
     def statement(self, p):
@@ -203,7 +203,7 @@ class GoneParser(Parser):
 
     @_('IF expression LBRACE program RBRACE ELSE LBRACE program RBRACE')
     def statement(self, p):
-        return IfElseStatement(p.expression, p.statements0, p.statements1, lineno=p.lineno)
+        return IfElseStatement(p.expression, p.program0, p.program1, lineno=p.lineno)
 
     @_('RETURN expression SEMI')
     def statement(self, p):

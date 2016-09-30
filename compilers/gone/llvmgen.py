@@ -144,11 +144,18 @@ class GenerateLLVM(object):
                                                FunctionType(void_type, [int_type]),
                                                name="_print_bool")
 
+
     def generate_code(self, ircode):
         # Given a sequence of SSA intermediate code tuples, generate LLVM
         # instructions using the current builder (self.builder).  Each
         # opcode tuple (opcode, args) is dispatched to a method of the
         # form self.emit_opcode(args)
+        # Gather all of the block labels
+
+        labels = [op[1] for op in ircode if op[0] == 'block']
+        # Make a dict of LLVM block objects (in advance!!!)
+        self.blocks = {label: self.function.append_basic_block(label)
+                       for label in labels}
 
         for opcode, *args in ircode:
             if hasattr(self, 'emit_' + opcode):
@@ -342,16 +349,34 @@ class GenerateLLVM(object):
         self.builder.call(self.runtime['_print_bool'], [tmp])
 
 
+    # blocks
+    def emit_block(self, label):
+        self.builder.position_at_end(self.blocks[label])
+
+    def emit_branch(self, label):
+        self.builder.branch(self.blocks[label])
+
+    def emit_cbranch(self, testvar, iflabel, elselabel):
+        self.builder.cbranch(self.temps[testvar],
+                             self.blocks[iflabel],
+                             self.blocks[elselabel])
+
     # Extern function declaration.  
-    def emit_extern_func(self, name, rettypename, *parmtypenames):
-        rettype = typemap[rettypename]
-        parmtypes = [typemap[pname] for pname in parmtypenames]
+    def emit_extern_func(self, name, return_type, parameter_names):
+        print("emit_extern_func: ", name, return_type, parameter_names)
+        rettype = typemap[return_type]
+        parmtypes = [typemap[pname] for pname in parameter_names]
         func_type = FunctionType(rettype, parmtypes)
         self.vars[name] = Function(self.module, func_type, name=name)
 
     # Call an external function.
-    def emit_call_func(self, funcname, *args):
-        pass  # You must implement
+    def emit_call_func(self, name, args, target):
+
+        print("NOT IMPLEMENTED: emit_call_func: ", name, *args)
+        func = self.vars[name]
+        argvals = [self.temps[name] for name in args]
+        print('{}'.format(self.temps))
+        self.temps[target] = self.builder.call(func, argvals)
 
 
 #######################################################################
