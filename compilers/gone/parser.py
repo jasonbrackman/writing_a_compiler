@@ -199,7 +199,7 @@ class GoneParser(Parser):
 
     @_('IF expression LBRACE program RBRACE')
     def statement(self, p):
-        return IfElseStatement(p.expression, p.statements, lineno=p.lineno)
+        return IfElseStatement(p.expression, p.program, lineno=p.lineno)
 
     @_('IF expression LBRACE program RBRACE ELSE LBRACE program RBRACE')
     def statement(self, p):
