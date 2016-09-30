@@ -46,7 +46,7 @@ def main():
     from gone.llvmgen import compile_llvm
     import sys
     sys.argv = ['',
-                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/testrel_int.g']
+                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/testrel_bad.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.run filename\n")
