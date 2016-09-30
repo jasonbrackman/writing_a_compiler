@@ -25,6 +25,9 @@ later--ideally you don't want to change everything else when you do.
 # List of builtin types.  These will get added to the symbol table
 builtin_types = ['int', 'float', 'string']
 
+# Bool type. Used in the checker for conditionals
+bool_type = 'bool'
+
 # Error type (default for the dict if not present)
 error_type = None
 
@@ -35,20 +38,48 @@ _supported_binops = {
     ('int', '+', 'int'): 'int',
     ('int', '*', 'int'): 'int',
     ('int', '/', 'int'): 'int',
-    ('float', '-', 'float'): 'float',
+    ('int', '<', 'int'): 'bool',
+    ('int', '<=', 'int'): 'bool',
+    ('int', '>', 'int'): 'bool',
+    ('int', '>=', 'int'): 'bool',
+    ('int', '==', 'int'): 'bool',
+    ('int', '!=', 'int'): 'bool',
+
+    # Floating point operations
     ('float', '+', 'float'): 'float',
+    ('float', '-', 'float'): 'float',
     ('float', '*', 'float'): 'float',
     ('float', '/', 'float'): 'float',
-    ('string', '+', 'string'): 'string'
+    ('float', '<', 'float'): 'bool',
+    ('float', '<=', 'float'): 'bool',
+    ('float', '>', 'float'): 'bool',
+    ('float', '>=', 'float'): 'bool',
+    ('float', '==', 'float'): 'bool',
+    ('float', '!=', 'float'): 'bool',
+
+    # Strings
+    ('string', '+', 'string'): 'string',
+
+    # Bool operations
+    ('bool', '==', 'bool'): 'bool',
+    ('bool', '!=', 'bool'): 'bool',
+    ('bool', '||', 'bool'): 'bool',
+    ('bool', '&&', 'bool'): 'bool',
+
 }
 
 # Dict mapping all valid unary operations to result type
 _supported_unaryops = {
-    # You define
+    # int
     ('+', 'int'): 'int',
     ('-', 'int'): 'int',
+
+    # Float
     ('+', 'float'): 'float',
-    ('-', 'float'): 'float'
+    ('-', 'float'): 'float',
+
+    # Bool
+    ('!', 'bool'): 'bool'
 }
 
 

@@ -24,8 +24,10 @@ LLVM Compile:
 Process:
     0. tokenizer
     1. parser
+        - relies on ast.py
     2. checker
     3. ircode
+        - relies on llvmgen.py
         * can run this independantly to see what IRCODE is generated:
             python3 -m gone.ircode Tests/good_partial.g
     4. llvm
@@ -63,3 +65,7 @@ Code related:
     Control flow (with regards to if blocks):
         - Need to a have a graph
         - Will require keeping track of branches.
+
+Extras:
+    - 'str has not attribute type' error means you've passed llvm a string, not the object from self.temps[] -- fyi.
+    - Keyerror in ircode often  means that the 'binary_ops dict' is missing a component.

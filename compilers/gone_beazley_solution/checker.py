@@ -128,7 +128,7 @@ class CheckProgramVisitor(NodeVisitor):
             if node.type != node.value.type and node.value.type:
                 error(node.lineno, 'Type error. %s = %s' % (node.type, node.value.type))
 
-        if node.name in self.symbols:
+        if node.name in self.FFFFFFFsymbols:
             error(node.lineno, '%r already defined.' % node.name)
         else:
             self.symbols[node.name] = node

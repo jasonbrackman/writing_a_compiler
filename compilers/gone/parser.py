@@ -108,8 +108,12 @@ class GoneParser(Parser):
     # precedence rules as in Python.  Instructions to be given in the project.
 
     # higher the index the higher the priority
-    precedence = (('left', 'PLUS', 'MINUS'),
-                  ('left', 'TIMES', 'DIVIDE'))
+    precedence = (('left', 'LOR'),
+                  ('left', 'LAND'),
+                  ('nonassoc', 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'),
+                  ('left', 'PLUS', 'MINUS'),
+                  ('left', 'TIMES', 'DIVIDE'),
+                  ('right', 'UNARY'))
 
     # ----------------------------------------------------------------------
     # YOUR TASK.   Translate the BNF in the string below into a collection
@@ -152,7 +156,6 @@ class GoneParser(Parser):
     def program(self, p):
         return Program([])  # start with an empty list
 
-
     @_('statements statement')
     def statements(self, p):
         p.statements.append(p.statement)
@@ -189,6 +192,25 @@ class GoneParser(Parser):
     def statement(self, p):
         """var x int;"""
         return VarDeclaration(p.ID, p.datatype, None, lineno=p.lineno)
+
+    @_('WHILE expression LBRACE program RBRACE')
+    def statement(self, p):
+        return WhileStatement(p.expression, p.block, lineno=p.lineno)
+
+    @_('IF expression LBRACE program RBRACE')
+    def statement(self, p):
+        return IfElseStatement(p.expression, p.statements, lineno=p.lineno)
+
+    @_('IF expression LBRACE program RBRACE ELSE LBRACE program RBRACE')
+    def statement(self, p):
+        return IfElseStatement(p.expression, p.statements0, p.statements1, lineno=p.lineno)
+
+    @_('RETURN expression SEMI')
+    def statement(self, p):
+        """
+        return 1+1
+        """
+        return ReturnStatement(p.expression, lineno=p.lineno)
 
     # @_('prototype LBRACE basicblock RBRACE')
     # def func_declaration(self, p):
@@ -235,12 +257,21 @@ class GoneParser(Parser):
     @_('expression PLUS expression',
        'expression MINUS expression',
        'expression DIVIDE expression',
-       'expression TIMES expression')
+       'expression TIMES expression',
+       'expression LT expression',
+       'expression LE expression',
+       'expression GT expression',
+       'expression GE expression',
+       'expression EQ expression',
+       'expression NE expression',
+       'expression LOR expression',
+       'expression LAND expression')
     def expression(self, p):
         return BinOp(p[1], p.expression0, p.expression1, lineno=p.lineno)
 
-    @_('MINUS expression',
-       'PLUS expression')
+    @_('PLUS expression %prec UNARY',
+       'MINUS expression %prec UNARY',
+       'LNOT expression %prec UNARY')
     def expression(self, p):
         return UnaryOp(p[0], p.expression, lineno=p.lineno)
 
@@ -258,6 +289,16 @@ class GoneParser(Parser):
     def expression(self, p):
         p.location.usage = "load"
         return p.location
+
+    @_('TRUE',
+       'FALSE')
+    def literal(self, p):
+        if p[0] == 'true':
+            val = True
+        else:
+            val = False
+        return Literal(val, 'bool', lineno=p.lineno)
+
 
     @_('INTEGER')
     def literal(self, p):

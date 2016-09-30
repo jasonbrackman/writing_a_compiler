@@ -190,6 +190,27 @@ class BinOp(AST):
     '''
     _fields = ['op', 'left', 'right']
 
+# Conditions and while loops (Project 7)
+class IfElseStatement(AST):
+    '''
+    An if-else statement
+    '''
+    _fields = ['condition', 'if_statements', 'else_statements']
+
+class WhileStatement(AST):
+    '''
+    A while-loop
+    '''
+    _fields = ['condition', 'statements']
+
+# Functions (Project 8)
+class ReturnStatement(AST):
+    '''
+    Return statement
+    '''
+    _fields = ['expr']
+
+
 # ----------------------------------------------------------------------
 #                  DO NOT MODIFY ANYTHING BELOW HERE
 # ----------------------------------------------------------------------

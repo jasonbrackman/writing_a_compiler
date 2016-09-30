@@ -28,9 +28,11 @@ from llvmlite.ir import (
 # to the types being used the intermediate code being created by
 # the ircode.py file.
 
-int_type = IntType(32)      # 32-bit integer
-float_type = DoubleType()   # 64-bit float
-string_type = None          # Up to you (leave until the end)
+int_type   = IntType(32)   # 32-bit integer
+float_type = DoubleType()  # 64-bit float
+bool_type  = IntType(1)    # 1-bit integer (bool)
+
+string_type = None         # Up to you (leave until the end)
 
 void_type = VoidType()  # Void type.  This is a special type
                         # used for internal functions returning
@@ -43,6 +45,7 @@ typemap = {
     'int': int_type,
     'float': float_type,
     'string': string_type,
+    'bool': bool_type
 }
 
 
@@ -137,9 +140,9 @@ class GenerateLLVM(object):
                                                 FunctionType(void_type, [float_type]),
                                                 name="_print_float")
 
-        # self.runtime['_print_string'] = Function(self.module,
-        #                                          FunctionType(void_type, [string_type]),
-        #                                          name="_print_string")
+        self.runtime['_print_bool'] = Function(self.module,
+                                               FunctionType(void_type, [int_type]),
+                                               name="_print_bool")
 
     def generate_code(self, ircode):
         # Given a sequence of SSA intermediate code tuples, generate LLVM
@@ -169,8 +172,8 @@ class GenerateLLVM(object):
     def emit_literal_float(self, value, target):
         self.temps[target] = Constant(float_type, value)
 
-    def emit_literal_string(self, value, target):
-        self.temps[target] = Constant(string_type, value)
+    def emit_literal_bool(self, value, target):
+        self.temps[target] = Constant(bool_type, value)
 
     # STRINGS BONUS: Nightmare scenarios :) --
     # def emit_literal_string(self, value, target):
@@ -188,9 +191,9 @@ class GenerateLLVM(object):
         var.initializer = Constant(float_type, 0)
         self.vars[name] = var
 
-    def emit_alloc_string(self, name):
-        var = GlobalVariable(self.module, string_type, name=name)
-        var.initializer = Constant(string_type, 0)
+    def emit_alloc_bool(self, name):
+        var = GlobalVariable(self.module, bool_type, name=name)
+        var.initializer = Constant(bool_type, 0)
         self.vars[name] = var
 
     # Load/store instructions for variables.  Load needs to pull a
@@ -202,7 +205,7 @@ class GenerateLLVM(object):
     def emit_load_float(self, name, target):
         self.temps[target] = self.builder.load(self.vars[name], target)
 
-    def emit_load_string(self, name, target):
+    def emit_load_bool(self, name, target):
         self.temps[target] = self.builder.load(self.vars[name], target)
 
     def emit_store_int(self, source, target):
@@ -211,7 +214,7 @@ class GenerateLLVM(object):
     def emit_store_float(self, source, target):
         self.builder.store(self.temps[source], self.vars[target])
 
-    def emit_store_string(self, source, target):
+    def emit_store_bool(self, source, target):
         self.builder.store(self.temps[source], self.vars[target])
 
     # Binary + operator
@@ -228,8 +231,7 @@ class GenerateLLVM(object):
     def emit_sub_float(self, left, right, target):
         self.temps[target] = self.builder.fsub(self.temps[left], self.temps[right], target)
 
-        # Binary * operator
-
+    # Binary * operator
     def emit_mul_int(self, left, right, target):
         self.temps[target] = self.builder.mul(self.temps[left], self.temps[right], target)
 
@@ -265,6 +267,66 @@ class GenerateLLVM(object):
                                                self.temps[source],
                                                target)
 
+    # Binary < operator
+    def emit_lt_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('<', self.temps[left], self.temps[right], target)
+
+    def emit_lt_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('<', self.temps[left], self.temps[right], target)
+
+    # Binary <= operator
+    def emit_le_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('<=', self.temps[left], self.temps[right], target)
+
+    def emit_le_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('<=', self.temps[left], self.temps[right], target)
+
+    # Binary > operator
+    def emit_gt_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('>', self.temps[left], self.temps[right], target)
+
+    def emit_gt_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('>', self.temps[left], self.temps[right], target)
+
+    # Binary >= operator
+    def emit_ge_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('>=', self.temps[left], self.temps[right], target)
+
+    def emit_ge_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('>=', self.temps[left], self.temps[right], target)
+
+    # Binary == operator
+    def emit_eq_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('==', self.temps[left], self.temps[right], target)
+
+    def emit_eq_bool(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('==', self.temps[left], self.temps[right], target)
+
+    def emit_eq_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('==', self.temps[left], self.temps[right], target)
+
+    # Binary != operator
+    def emit_ne_int(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('!=', self.temps[left], self.temps[right], target)
+
+    def emit_ne_bool(self, left, right, target):
+        self.temps[target] = self.builder.icmp_signed('!=', self.temps[left], self.temps[right], target)
+
+    def emit_ne_float(self, left, right, target):
+        self.temps[target] = self.builder.fcmp_ordered('!=', self.temps[left], self.temps[right], target)
+
+    # Binary && operator
+    def emit_and_bool(self, left, right, target):
+        self.temps[target] = self.builder.and_(self.temps[left], self.temps[right], target)
+
+    # Binary || operator
+    def emit_or_bool(self, left, right, target):
+        self.temps[target] = self.builder.or_(self.temps[left], self.temps[right], target)
+
+    # Unary ! operator
+    def emit_not_bool(self, source, target):
+        self.temps[target] = self.builder.icmp_signed('==', self.temps[source], Constant(bool_type, 0), target)
+
     # Print statements
     def emit_print_int(self, source):
         self.builder.call(self.runtime['_print_int'], [self.temps[source]])
@@ -275,8 +337,10 @@ class GenerateLLVM(object):
         except KeyError as e:
             print("Failed to print a float: {}".format(e))
 
-    # def emit_print_string(self, source):
-    #     self.builder.call(self.runtime['_print_string'], [self.temps[source]])
+    def emit_print_bool(self, source):
+        tmp = self.builder.zext(self.temps[source], int_type)
+        self.builder.call(self.runtime['_print_bool'], [tmp])
+
 
     # Extern function declaration.  
     def emit_extern_func(self, name, rettypename, *parmtypenames):

@@ -110,7 +110,8 @@ class GoneLexer(Lexer):
     # ----------------------------------------------------------------------
     # Keyword set. This set lists all of the special names used in the
     # language such as 'if', 'else', 'while', 'return', etc.
-    keywords = { 'var', 'const', 'print', 'func', 'extern', }
+    keywords = {'var', 'const', 'print', 'func', 'extern',
+                'true', 'false', 'if', 'else', 'while', 'return'}
 
     # ----------------------------------------------------------------------
     # Token set. This set identifies the complete list of token names
@@ -131,6 +132,9 @@ class GoneLexer(Lexer):
         # Delimiters and other symbols
         'ASSIGN', 'LPAREN', 'RPAREN', 'SEMI', 'COMMA', 
         'LBRACE', 'RBRACE', 'LBRACKET', 'RBRACKET',
+
+        # Booleans
+        'LT', 'LE', 'GT', 'GE', 'EQ', 'NE', 'LOR', 'LAND', 'LNOT'
 
     }
 
@@ -179,13 +183,16 @@ class GoneLexer(Lexer):
     COMMA     = r','
     LBRACKET  = r'\['
     RBRACKET  = r'\]'
-    ASSIGN = r'='
-    #LE = r'<='
-    #LT = r'<'
-    #GE = r'>='
-    #GT = r'[>]'
-    #NE = r'!='
-    #EQ = r'=='
+    LE        = r'<='
+    GE        = r'>='
+    EQ        = r'=='
+    NE        = r'!='
+    LT        = r'<'
+    GT        = r'>'
+    LAND      = r'&&'
+    LOR       = r'\|\|'
+    LNOT      = r'!'
+    ASSIGN    = r'='
 
     # ----------------------------------------------------------------------
     # *** YOU MUST COMPLETE : write the regexs and additional code below ***
