@@ -71,7 +71,7 @@ def main():
 
     import sys
     sys.argv = ['',
-                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/letters.g']
+                r'/Users/jasonbrackman/PycharmProjects/writing_a_compiler/compilers/Tests/mandel_simple.g']
 
     if len(sys.argv) != 2:
         sys.stderr.write("Usage: python3 -m gone.run filename\n")

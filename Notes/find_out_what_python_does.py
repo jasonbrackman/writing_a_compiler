@@ -6,10 +6,10 @@
 #
 # ------------------------------------------------------------------
 
-import ast
+import _ast
 
 if __name__ == '__main__':
 
-    node = ast.parse("a = 1 + 2")
+    node = _ast.parse("a = 1 + 2")
 
-    print(ast.dump(node))
+    print(_ast.dump(node))

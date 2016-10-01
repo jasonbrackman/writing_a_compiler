@@ -8,12 +8,12 @@ f = a + c
 g = c * c
 '''
 
-import ast
-top = ast.parse(code)
-print(ast.dump(top))
+import _ast
+top = _ast.parse(code)
+print(_ast.dump(top))
 
 # Part (a) - AST Walking
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def visit_Name(self,  node):
         print(node.id, node.ctx)
 
@@ -22,17 +22,17 @@ SimpleCheck().visit(top)
 
 # Part (b) - Symbol tables
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = set()
 
     def visit_Name(self, node):
         # If storing, a name is added to the symbol table
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols.add(node.id)
 
         # If loading, check for definition in the symbol table
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
 
@@ -40,7 +40,7 @@ SimpleCheck().visit(top)
 
 # Part (c) - Introducing a Type System
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = { }
 
@@ -61,11 +61,11 @@ class SimpleCheck(ast.NodeVisitor):
             
     def visit_Name(self, node):
         # If storing, a type is added to the symbol table
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols[node.id] = getattr(self.assignment_value, 'type', None)
 
         # If loading, check for definition in the symbol table
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
 
@@ -75,7 +75,7 @@ print(checker.symbols)
 
 # Part (d) - Type Propagation
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = { }
 
@@ -96,11 +96,11 @@ class SimpleCheck(ast.NodeVisitor):
             
     def visit_Name(self, node):
         # If storing, a type is added to the symbol table
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols[node.id] = getattr(self.assignment_value, 'type', None)
 
         # If loading, check for definition and set the type attribute
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
             else:
@@ -118,7 +118,7 @@ print(checker.symbols)
 
 # Part (e) - Type Checking
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = { }
 
@@ -139,11 +139,11 @@ class SimpleCheck(ast.NodeVisitor):
             
     def visit_Name(self, node):
         # If storing, a symbol is added to the symbol table
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols[node.id] = getattr(self.assignment_value, 'type', None)
 
         # If loading, a symbol is loaded from the symbol table
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
             else:
@@ -177,7 +177,7 @@ supported_binops = {
     ('num', 'Mult', 'string') : 'string'
 }
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = { }
 
@@ -198,11 +198,11 @@ class SimpleCheck(ast.NodeVisitor):
             
     def visit_Name(self, node):
         # If storing, a symbol is added to the symbol table
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols[node.id] = getattr(self.assignment_value, 'type', None)
 
         # If loading, a symbol is loaded from the symbol table
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
             else:

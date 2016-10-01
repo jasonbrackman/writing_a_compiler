@@ -6,7 +6,7 @@
 #
 # ------------------------------------------------------------------
 
-import ast
+import _ast
 
 code = '''
 a = 23
@@ -23,7 +23,7 @@ g = c * c
 
 
 
-class SimpleCheck(ast.NodeVisitor):
+class SimpleCheck(_ast.NodeVisitor):
     def __init__(self):
         self.symbols = {}
 
@@ -46,11 +46,11 @@ class SimpleCheck(ast.NodeVisitor):
 
     def visit_Name(self, node):
         # If storing, a type is added to the symbol table (from self.assignment_value above)
-        if isinstance(node.ctx, ast.Store):
+        if isinstance(node.ctx, _ast.Store):
             self.symbols[node.id] = getattr(self.assignment_value, 'type', None)
 
         # If loading, check definition in symbol table and attach type
-        elif isinstance(node.ctx, ast.Load):
+        elif isinstance(node.ctx, _ast.Load):
             if node.id not in self.symbols:
                 print('Error: Name %s not defined' % node.id)
             else:
@@ -81,6 +81,6 @@ class SimpleCheck(ast.NodeVisitor):
 
 if __name__ == '__main__':
     checker = SimpleCheck()
-    top = ast.parse(code)
+    top = _ast.parse(code)
     checker.visit(top)
     print(checker.symbols)

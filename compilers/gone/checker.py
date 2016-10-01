@@ -97,7 +97,7 @@ that need to be checked:
 
 Implementation Strategy:
 ------------------------
-You're going to use the NodeVisitor class defined in gone/ast.py to
+You're going to use the NodeVisitor class defined in gone/_ast.py to
 walk the parse tree.   You will be defining various methods for
 different AST node types.  For example, if you have a node BinaryOp,
 you'll write a method like this:
@@ -172,7 +172,7 @@ fumble around a bit at first.
 '''
 
 from gone.errors import error
-from gone.ast import *
+from gone._ast import *
 from gone.typesys import check_binop, check_unaryop, builtin_types
 
 
@@ -210,7 +210,7 @@ class SymbolTable(object):
 class CheckProgramVisitor(NodeVisitor):
     '''
     Program checking class.   This class uses the visitor pattern as described
-    in ast.py.   You need to define methods of the form visit_NodeName()
+    in _ast.py.   You need to define methods of the form visit_NodeName()
     for each kind of AST node that you want to process.  You may need to
     adjust the method names here if you've picked different AST node names.
     '''

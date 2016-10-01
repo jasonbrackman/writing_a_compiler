@@ -1,10 +1,10 @@
 # codegen.py
 
-import ast
+import _ast
 
-top = ast.parse("a + 2*b - 3*c")
+top = _ast.parse("a + 2*b - 3*c")
 
-class CodeGenerator(ast.NodeVisitor):
+class CodeGenerator(_ast.NodeVisitor):
     def __init__(self):
         self.code = []
 
@@ -16,7 +16,7 @@ class CodeGenerator(ast.NodeVisitor):
         self.code.append(inst)
         
     def visit_Name(self,node):
-        if isinstance(node.ctx, ast.Load):
+        if isinstance(node.ctx, _ast.Load):
             inst = ('LOAD_GLOBAL',node.id)
         else:
             inst = ('Unimplemented',)

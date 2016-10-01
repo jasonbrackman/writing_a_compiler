@@ -6,7 +6,7 @@
 #
 # ------------------------------------------------------------------
 
-import ast
+import _ast
 from simpleast import *
 
 def test_01():
@@ -19,8 +19,8 @@ def test_01():
     """
     text = "a = 2 + 3 * (4 + 5)"
 
-    c = ast.parse(text)
-    print(ast.dump(c))
+    c = _ast.parse(text)
+    print(_ast.dump(c))
 
 
 def test_02():

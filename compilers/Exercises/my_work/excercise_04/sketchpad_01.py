@@ -18,15 +18,15 @@ def look_at_machine_code():
 
 def ast_into_machine_code():
     # Machine AST into Machine Code
-    import ast
-    top = ast.parse("a + 2*b - 3*c")
-    print(ast.dump(top))
+    import _ast
+    top = _ast.parse("a + 2*b - 3*c")
+    print(_ast.dump(top))
 
 # Generate some code
-import ast
+import _ast
 
 
-class CodeGenerator(ast.NodeVisitor):
+class CodeGenerator(_ast.NodeVisitor):
     def __init__(self):
         self.code = []
 
@@ -38,7 +38,7 @@ class CodeGenerator(ast.NodeVisitor):
         self.code.append(inst)
 
     def visit_Name(self, node):
-        if isinstance(node.ctx, ast.Load):
+        if isinstance(node.ctx, _ast.Load):
             inst = ('LOAD_GLOBAL', node.id)
         else:
             inst = ('Unimplemented',)
@@ -50,7 +50,7 @@ class CodeGenerator(ast.NodeVisitor):
 
 
 def generate_machine_code():
-    top = ast.parse("a + 2*b - 3*c")
+    top = _ast.parse("a + 2*b - 3*c")
     gen = CodeGenerator()
     gen.visit(top)
     # print(gen.code)

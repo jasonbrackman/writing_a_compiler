@@ -1,17 +1,17 @@
 # codegen.py
 
-import ast
+import _ast
 
-top = ast.parse("""\
+top = _ast.parse("""\
 if a > 0:
    a + b
 else:
    a - b
 """)
 
-print(ast.dump(top))
+print(_ast.dump(top))
 
-class CodeGenerator(ast.NodeVisitor):
+class CodeGenerator(_ast.NodeVisitor):
     def __init__(self):
         self.code = []
 
@@ -23,7 +23,7 @@ class CodeGenerator(ast.NodeVisitor):
         self.code.append(inst)
         
     def visit_Name(self,node):
-        if isinstance(node.ctx, ast.Load):
+        if isinstance(node.ctx, _ast.Load):
             inst = ('LOAD_GLOBAL',node.id)
         else:
             inst = ('Unimplemented',)

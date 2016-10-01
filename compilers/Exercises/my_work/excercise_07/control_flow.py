@@ -7,6 +7,6 @@ else:
 done
 """
 
-import ast
-top = ast.parse(code)
-print(ast.dump(top))
+import _ast
+top = _ast.parse(code)
+print(_ast.dump(top))

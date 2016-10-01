@@ -44,8 +44,8 @@ class BlockVisitor(object):
                 getattr(self,name)(block)
             block = block.next_block
 
-import ast
-class CodeGenerator(ast.NodeVisitor):
+import _ast
+class CodeGenerator(_ast.NodeVisitor):
     '''
     Sample code generator with basic blocks and a control flow graph
     '''
@@ -102,7 +102,7 @@ class CodeGenerator(ast.NodeVisitor):
         self.current_block.append(inst)
 
     def visit_Name(self,node):
-        if isinstance(node.ctx, ast.Load):
+        if isinstance(node.ctx, _ast.Load):
             inst = ('LOAD_GLOBAL',node.id)
         else:
             inst = ('Unimplemented,')
@@ -144,7 +144,7 @@ class EmitBlocks(BlockVisitor):
             self.visit(block.else_branch)
 
 if __name__ == '__main__':
-    top = ast.parse("""\
+    top = _ast.parse("""\
 start
 if a < 0:
    a + b

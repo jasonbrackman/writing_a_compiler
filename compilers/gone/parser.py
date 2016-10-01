@@ -94,8 +94,8 @@ from gone.tokenizer import GoneLexer
 
 # ----------------------------------------------------------------------
 # Get the AST nodes.  
-# Read instructions in ast.py
-from gone.ast import *
+# Read instructions in _ast.py
+from gone._ast import *
 
 
 class GoneParser(Parser):

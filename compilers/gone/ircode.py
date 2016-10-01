@@ -193,7 +193,7 @@ Note: You may need to extend some of the existing op-codes to handle the new
 bool type as well.
 '''
 
-from . import ast
+from . import _ast
 from collections import defaultdict
 
 # STEP 1: Map map operator symbol names such as +, -, *, /
@@ -225,7 +225,7 @@ unary_ops = {
 # STEP 2: Implement the following Node Visitor class so that it creates
 # a sequence of SSA instructions in the form of tuples.  Use the
 # above description of the allowed op-codes as a guide.
-class GenerateCode(ast.NodeVisitor):
+class GenerateCode(_ast.NodeVisitor):
     variables_in_use = dict()
     '''
     Node visitor class that creates 3-address encoded instruction sequences.
